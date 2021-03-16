@@ -1,7 +1,13 @@
 update_description=$1
 
-tar -czvf plugin_files/update_primary_domain.tar.gz update_primary_domain
-tar -czvf plugin_files.tar.gz plugin_files
+# COPY AND ZIP
+mkdir plugin
+cp update_primary_domain.pl plugin/update_primary_domain.pl
+tar -czvf plugin/update_primary_domain.tar.gz update_primary_domain
+tar -czvf plugin.tar.gz plugin
+rm -rf plugin
+
+# GIT
 git add .
 git commit -m "${update_description}"
 git status
