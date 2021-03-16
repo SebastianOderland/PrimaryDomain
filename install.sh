@@ -4,16 +4,16 @@
 # AUTHOR: Sebastian Oderland
 
 clear
-echo "Installing Plugin"
-
-# Create the directory for the plugin
-mkdir -p /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain
+echo "Installing [Update Primary Domain] Plugin"
 
 # Get the plugin files from Github
 curl -s https://raw.githubusercontent.com/SebastianOderland/update_primary_domain/master/plugin_files.tar.gz > /root/plugin_files.tar.gz
 
 # Uncompress the archive
 tar xzf plugin_files.tar.gz
+
+# Create the directory for the plugin
+mkdir -p /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain
 
 # Move files to /usr/local/cpanel/base/frontend/paper_lantern/[plugin_name] directory
 mv /root/update_primary_domain.pl /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain
