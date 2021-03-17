@@ -90,70 +90,6 @@
                         </div>
                     </div>
 
-                    <div id="ftpCreationForm" style="display: none">
-                        <div class="form-group">
-                            <label id="lblFtpUser" for="user">
-                                [% locale.maketext("FTP Username") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div class="input-group">
-                                        <input id="ftpuser" type="text" class="form-control hide-clear-button" name="ftpuser" />
-                                        <span class="input-group-addon">@ <span id="ftpuser-domain"></span></span>
-                                        <input type="hidden" name="root_domain" id="root_domain" value="[% CPANEL.CPDATA.DNS %]" />
-                                    </div>
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="ftpuser_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label id="lblPassword1" for="password1">
-                                [% locale.maketext("Password") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input id="password1" type="password" autocomplete='off' name="pass" class="form-control" />
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password1_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label id="lblPassword2" for="password2">
-                                [% locale.maketext("Password (Again)") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input id="password2" type="password" autocomplete='off' name="pass2" class="form-control" />
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password2_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label id="lblPasswordStrength">
-                                [% locale.maketext("Strength") %]
-                                <span id="why_strong_passwords_link" class="glyphicon glyphicon-info-sign"></span>
-                            </label>
-                            [% INCLUDE _assets/why_strong_passwords.html.tt %]
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password_strength" class="password_strength"></div>
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input type="button" id="create_strong_password"
-                                        class="btn btn-default"
-                                        value="[% locale.maketext("Password Generator") %]"
-                                        tabindex="-1" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="form-group">
                         <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
                     </div>
@@ -173,45 +109,7 @@
 [% END #wrapper %]
 
 [% BLOCK js_block %]
-<script type="text/javascript">
-    PAGE.public_html_subs_only = [% (CPANEL.CPCONF.publichtmlsubsonly) ? "true" : "false" %];
-    PAGE.REQUIRED_PASSWORD_STRENGTH = parseInt('[% password_strength %]', 10) || 1;
-    PAGE.userdomains = [% CPANEL.CPDATA.DOMAINS.json() || '[]' %];
 
-    /**
-     * The init function used for this page.
-     *
-     * @method init
-     */
-    var init = function() {
-    [% IF !resource_usage_limits || !resource_usage_limits.is_maxed %]
-        YAHOO.util.Event.on("domain", "change", fillInValues);
-        YAHOO.util.Event.on("domain", "input", suggestCreatingSubdomain);
-
-        YAHOO.util.Event.on("create_ftp_account", "change", toggleFtpCreationForm);
-
-        initValidation();
-        initFtpDomainListener();
-    [% END %]
-
-    [% IF FORM.item('button-search') %]
-        var regex = YAHOO.util.Dom.get("searchregex");
-        regex.focus();
-
-        // Move to end of selection
-        var val = regex.value;
-        regex.value = "";
-        regex.value = val;
-    [% ELSE  %]
-        var domain = document.getElementById('domain');
-        if (domain !== null) {
-            domain.focus();
-        }
-    [% END %]
-    };
-
-    YAHOO.util.Event.onDOMReady(init);
-</script>
 [% END %]
 
 [% BLOCK css_block %]
