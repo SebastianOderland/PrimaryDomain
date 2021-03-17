@@ -7,11 +7,6 @@
         SET CPANEL.CPVAR.itemsperpage="20";
     END;
 
-    SET password_strength_result = Api2.exec("PasswdStrength" , "get_required_strength" , {"app" =>"pop" });
-    IF password_strength_result.size();
-        SET password_strength = password_strength_result.0.strength;
-    END;
-
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
 
     PROCESS '_assets/resource_usage_macro.html.tt';
@@ -58,15 +53,15 @@
 
     [% IF CPANEL.feature("update_primary_domain") %]
         <p id="descAddon" class="description">
-            [% locale.maketext("Update primary domain [output,url,_1,documentation,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
+            [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>
 
 
         [% resource_code %]
         [% IF !resource_usage_limits || !resource_usage_limits.is_maxed %]
             <div class="section">
-                <h2>[% locale.maketext("Create an Addon Domain") %]</h2>
-                <form id="mainform" method="post" action="doadddomain.html" name="mainform">
+                <h2>[% locale.maketext("Update Primary Domain Name") %]</h2>
+                <form id="mainform" method="post" action="doupdateprimarydomain.html" name="mainform">
                     <!-- prevent password autofill -->
                     <input type="text" style="display:none">
                     <input type="password" autocomplete='off' style="display:none">
@@ -97,7 +92,6 @@
             </div><!-- end highlight -->
         [% ELSE %]
             <input id="password1" type="hidden" name="pass" class="form-control" />
-            <div style="display:none;" id="password_strength" class="password_strength"></div>
         [% END %]
     [% END %]<!-- end cpanelfeature addondomains -->
 
@@ -111,7 +105,7 @@
 [% BLOCK js_block %]
 <script type="text/javascript">
     PAGE.public_html_subs_only = [% (CPANEL.CPCONF.publichtmlsubsonly) ? "true" : "false" %];
-    PAGE.REQUIRED_PASSWORD_STRENGTH = parseInt('[% password_strength %]', 10) || 1;
+    //PAGE.REQUIRED_PASSWORD_STRENGTH = parseInt('[% password_strength %]', 10) || 1;
     PAGE.userdomains = [% CPANEL.CPDATA.DOMAINS.json() || '[]' %];
 
     /**
