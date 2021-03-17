@@ -1,11 +1,12 @@
 [%
+    use JSON;
     SET CPANEL.CPVAR.dprefix="../";
 
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
 
-    SET current_primary_domain = execute( 'Variables', 'get_user_information',
+    SET current_primary_domain = execute("Variables", "get_user_information",
     {
-        'name-1' => 'domain',
+        'name' => 'domain',
     });
 %]
 
@@ -34,7 +35,7 @@
         </p>
 
 
-        [% current_primary_domain.data.domain %]
+        [% current_primary_domain.result.data.domain %]
             <div class="section">
                 <h2>[% locale.maketext("Update Primary Domain Name") %]</h2>
                 <form id="mainform" method="post" action="doupdateprimarydomain.html" name="mainform">
