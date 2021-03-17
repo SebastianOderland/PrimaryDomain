@@ -7,6 +7,11 @@
         SET CPANEL.CPVAR.itemsperpage="20";
     END;
 
+    SET password_strength_result = Api2.exec("PasswdStrength" , "get_required_strength" , {"app" =>"pop" });
+    IF password_strength_result.size();
+        SET password_strength = password_strength_result.0.strength;
+    END;
+
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
 
     PROCESS '_assets/resource_usage_macro.html.tt';
@@ -90,8 +95,27 @@
                     </div>
                 </form>
             </div><!-- end highlight -->
+            <div class="form-group">
+                <label id="lblPasswordStrength">
+                    [% locale.maketext("Strength") %]
+                    <span id="why_strong_passwords_link" class="glyphicon glyphicon-info-sign"></span>
+                </label>
+                [% INCLUDE _assets/why_strong_passwords.html.tt %]
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                        <div id="password_strength" class="password_strength"></div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                        <input type="button" id="create_strong_password"
+                            class="btn btn-default"
+                            value="[% locale.maketext("Password Generator") %]"
+                            tabindex="-1" />
+                    </div>
+                </div>
+            </div>
         [% ELSE %]
             <input id="password1" type="hidden" name="pass" class="form-control" />
+            <div style="display:none;" id="password_strength" class="password_strength"></div>
         [% END %]
     [% END %]<!-- end cpanelfeature addondomains -->
 
@@ -105,6 +129,7 @@
 [% BLOCK js_block %]
 <script type="text/javascript">
     PAGE.public_html_subs_only = [% (CPANEL.CPCONF.publichtmlsubsonly) ? "true" : "false" %];
+    PAGE.REQUIRED_PASSWORD_STRENGTH = parseInt('[% password_strength %]', 10) || 1;
     PAGE.userdomains = [% CPANEL.CPDATA.DOMAINS.json() || '[]' %];
 
     /**
