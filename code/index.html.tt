@@ -1,56 +1,167 @@
-[% USE EximLocalOpts; USE JSON; USE Master; USE CPBranding; SET APP_KEY = "email_deliverability"; SET CPANEL.CPVAR.dprefix = "../"; SET page_styles_list = [ 'email_deliverability/index.css']; SET embeded_styles_list = []; SET zone_editor = CPBranding.get_application_from_available_applications(varcache.available_applications,
-"zone_editor"); IF zone_editor; SET zone_editor_url = CPANEL.CPVAR.dprefix _ zone_editor.url _ "#/manage/"; END; IF !CPANEL.ua_is_mobile; embeded_styles_list.push("css/angular-chosen-spinner.css"); page_styles_list.push("libraries/chosen/1.5.1/chosen.min.css");
-END; SET view_templates = []; -%] [% js_code = PROCESS js_block %] [% WRAPPER '_assets/master.html.tt' app_key = APP_KEY feature = 'emailauth' page_js = js_code include_legacy_stylesheets = 0 include_legacy_scripts = 0 include_cjt = 0 use_master_bootstrap
-= 0 focus_feature_search = 0 page_stylesheets = page_styles_list embed_stylesheets = embeded_styles_list show_breadcrumb = 1 -%]
+[%
+    SET CPANEL.CPVAR.dprefix="../";
 
-<div id="body-content" class="body-content">
+    SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
+%]
 
-    <!-- NOTE: leave the alert-group in single quotes -->
-    <cp-alert-list id="mainAlertList"></cp-alert-list>
+[%
+    # Note: a MACRO was not used here because we need to be able
+    # to access resource_usage_limits after the block runs
+    SET resource_usage_key = 'addondomains';
+    SET resource_usage_percent_used_to_warn = 80;
+    resource_code = PROCESS resource_usage_block;
+%]
+[% js_code = PROCESS js_block %]
+[% css_code = PROCESS css_block %]
 
-    <div class="row" ng-controller="RouteController as routeController">
-        <div class="col-md-12">
-            <p class="description">
-                [% locale.maketext("Use this interface to reduce the number of emails sent from this server that end up in spam folders. For more information, read our [output,url,_1,Email Deliverability,target,_blank] documentation.", 'https://go.cpanel.net/EmailDeliverabilityincPanel')
-                %]
-            </p>
+[% WRAPPER '_assets/master.html.tt'
+    app_key = "update_primary_domain"
+    include_legacy_stylesheets = 1
+    include_legacy_scripts = 1
+    include_cjt = 1
+    page_styles = css_code
+    page_js = js_code
+    page_scripts = CPANEL.is_debug_mode_enabled() ?
+        ["js/statusbox.js", "js2/addon/index.js"] :
+        ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
+-%]
 
-            <div id="body-content" class="body-content ng-cloak">
+[% INCLUDE _assets/_ajaxapp_header.html.tt %]
 
-                <cp-loading-panel id="loadingRoutePanel" ng-show="loading">[% locale.maketext('Loading …') %]</cp-loading-panel>
+<div class="body-content">
 
-                <div ng-show="currentTab && !loading">
-                    <h2 ng-hide="currentTab.hideTitle" ng-bind="currentTab.title" class="break-on-mobile"></h2>
-                    <p ng-if="currentTab.description" class="current-tab-description" ng-bind-html="currentTab.description"></p>
-                    <div id="viewContent" class="ng-cloak section animate-view" ng-view ng-cloak>
+    [% IF CPANEL.feature("update_primary_domain") %]
+        <p id="descAddon" class="description">
+            [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
+        </p>
+
+
+        [% resource_code %]
+        [% IF !resource_usage_limits || !resource_usage_limits.is_maxed %]
+            <div class="section">
+                <h2>[% locale.maketext("Update Primary Domain Name") %]</h2>
+                <form id="mainform" method="post" action="doupdateprimarydomain.html" name="mainform">
+                    <!-- prevent password autofill -->
+                    <input type="text" style="display:none">
+                    <input type="password" autocomplete='off' style="display:none">
+                    <div class="form-group">
+                        <label id="lblDomain" for="domain">
+                            [% locale.maketext("New Primary Domain Name") %]
+                        </label>
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                <input id="domain" type="text" class="form-control hide-clear-button" name="domain" />
+                                <div id="domain_info" class="hide">
+                                    <div class="alert alert-info no-bottom-margin extra-top-margin" role="alert">
+                                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                        <div class="alert-message">[% locale.maketext('This addon domain looks like a subdomain of your current domain or another domain you own. Would you like to [output,url,_1,create a subdomain instead]?', '../subdomain/index.html') %]</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                <div id="domain_error" class="show_inline"></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-            </div>
+                    <div class="form-group">
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
+                    </div>
+                </form>
+            </div><!-- end highlight -->
+        [% END %]
+    [% END %]<!-- end cpanelfeature addondomains -->
 
-        </div>
-    </div>
+</div><!-- end body-content -->
 
-    [% FOREACH ptt IN view_templates %]
-    <script id="[% ptt %]" type="text/ng-template">
-        [%- PROCESS $ptt -%]
-    </script>
-    [% END %]
+[% INCLUDE _assets/_ajaxapp_footer.html.tt %]
 
-    <script id="decorators/pagination.phtml" type="text/ng-template">
-        [%- INSERT "decorators/pagination.phtml" -%]
-    </script>
+[% INCLUDE 'subdomain/include_changedocroot.html.tt' %]
+[% END #wrapper %]
 
-    [% PROCESS '_assets/cjt2_header_include.tt' %]
+[% BLOCK js_block %]
 
-</div>
-<!-- end body-content div -->
-[% END #wrapper %] [% BLOCK js_block %]
-<script type="text/javascript">
-    var PAGE = PAGE || {};
-    PAGE.domains = [ % -CPANEL.CPDATA.DOMAINS.json() - % ];
-    PAGE.mainDomain = [ % CPANEL.CPDATA.DNS.html.json() % ];
-    PAGE.zoneEditorUrl = "[% zone_editor_url %]";
-    PAGE.skipPTRLookups = [ % EximLocalOpts.is_using_smart_host() ? 'true' : 'false' % ];
-</script>
-[% END #js_block %]
+[% END %]
+
+[% BLOCK css_block %]
+<style type="text/css">
+.no-bottom-margin {
+    margin-bottom: 0;
+}
+
+.extra-top-margin {
+    margin-top: 5px;
+}
+
+/*
+This was added since there is currently a bug with
+Edge where it does not fire events properly when the
+clear button is pressed in input fields.
+See https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/17584515/
+Once that gets resolved, feel free to remove this class and its use.
+*/
+.hide-clear-button::-ms-clear,
+#dir::-ms-clear {
+    display: none;
+}
+
+.search-panel {
+    margin-bottom: 20px;
+}
+
+.long-column {
+    max-width: 350px;
+    word-wrap: break-word;
+}
+
+html[data-style="retro"] .long-column {
+    max-width: 713px;
+}
+
+@media (min-width: 500px) and (max-width: 600px) {
+    .long-column {
+        max-width: 475px;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 767px) {
+    .long-column {
+        max-width: 80px;
+    }
+
+    html[data-style="retro"] .long-column {
+        max-width: 140px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .long-column {
+        max-width: 120px;
+    }
+
+    html[data-style="retro"] .long-column {
+        max-width: 140px;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .long-column {
+        max-width: 195px;
+    }
+
+    html[data-style="retro"] .long-column {
+        max-width: 140px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .long-column {
+        max-width: 265px;
+    }
+
+    html[data-style="retro"] .long-column {
+        max-width: 140px;
+    }
+}
+</style>
+[% END %]
