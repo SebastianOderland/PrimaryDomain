@@ -5,7 +5,7 @@
     "group_id": "domains",
     "name": "Update Primary Domain",
     "order": "99",
-    "uri": "update_primary_domain/index.html",
+    "uri": "update_primary_domain/index.html.tt",
     "featuremanager": true,
-    "target": "update_primary_domain"
+    "target": "index.html"
 }]
