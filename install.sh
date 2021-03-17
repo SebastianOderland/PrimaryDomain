@@ -16,10 +16,10 @@ mv -v /root/tmp/plugin/* /usr/local/cpanel/base/frontend/paper_lantern/update_pr
 mkdir -p /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain
 /usr/local/cpanel/scripts/install_plugin /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain/update_primary_domain.tar.gz
 
-rm -rf /root/tmp/plugin.tar.gz
-rm -rf /root/tmp/plugin
 """
 
 echo "Installation is complete!"
 
+#rm -rf /root/tmp/plugin.tar.gz
+#rm -rf /root/tmp/plugin
 #rm /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain/
