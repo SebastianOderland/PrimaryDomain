@@ -6,6 +6,5 @@
     "name": "Update Primary Domain",
     "order": "99",
     "uri": "update_primary_domain/index.html.tt",
-    "featuremanager": true,
-    "target": "index.html"
+    "featuremanager": true
 }]

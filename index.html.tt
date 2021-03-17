@@ -41,7 +41,7 @@
 [% css_code = PROCESS css_block %]
 
 [% WRAPPER '_assets/master.html.tt'
-    app_key = "addon_domains"
+    app_key = "update_primary_domain"
     include_legacy_stylesheets = 1
     include_legacy_scripts = 1
     include_cjt = 1
@@ -56,9 +56,9 @@
 
 <div class="body-content">
 
-    [% IF CPANEL.feature("addondomains") %]
+    [% IF CPANEL.feature("update_primary_domain") %]
         <p id="descAddon" class="description">
-            [% locale.maketext("An addon domain is an additional domain that the system stores as a subdomain of your main site. Use addon domains to host additional domains on your account. For more information, read the [output,url,_1,documentation,target,_2,id,_3].", "//go.cpanel.net/AddonDomain", "_blank", "lnkAddonDocumentation") %]
+            [% locale.maketext("Update primary domain [output,url,_1,documentation,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>
 
 
@@ -72,7 +72,7 @@
                     <input type="password" autocomplete='off' style="display:none">
                     <div class="form-group">
                         <label id="lblDomain" for="domain">
-                            [% locale.maketext("New Domain Name") %]
+                            [% locale.maketext("New Primary Domain Name") %]
                         </label>
                         <div class="row">
                             <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
@@ -89,121 +89,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label id="lblSubdomain" for="subdomain">
-                            [% locale.maketext("Subdomain") %]
-                        </label>
-                        <div class="row">
-                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                <input id="subdomain" type="text" class="form-control hide-clear-button" name="subdomain" />
-                            </div>
-                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                <div id="subdomain_error" class="show_inline"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label id="lblDir" for="dir">
-                            [% locale.maketext("Document Root") %]
-                        </label>
-                        [%
-                            SET CPANEL.CPVAR.autodirsonly     = "1";
-                            SET CPANEL.CPVAR.autoskipreserved = "1";
-                            SET CPANEL.CPVAR.autoinput        = "dir";
-                            SET CPANEL.CPVAR.inputsize        = "150px";
-                            SET CPANEL.CPVAR.autofunc         = "dirComplete";
-                            SET input_group_text = '<span id="docrootImg" class="fas fa-home"></span> /';
-                            IF CPANEL.CPCONF.publichtmlsubsonly;
-                                input_group_text = input_group_text _ 'public_html/';
-                            END;
-                        %]
-                        <script type="text/javascript">
-                        function dirComplete(inputObj) {}
-                        </script>
-                        [% PROCESS 'autodir/dirbox.html.tt'
-                            input_group_addon_text=input_group_text
-                            restrict_autodir_to_docroot=CPANEL.CPCONF.publichtmlsubsonly
-                            show_error_inline=1
-                        %]
-                    </div>
 
-                    [% IF daemon_info.data.enabled %]
                     <div class="form-group">
-                        <div class="checkbox">
-                            <label id="lblCreateFtp">
-                                <input type="checkbox" id="create_ftp_account" name="create_ftp_account" />
-                                [% locale.maketext("Create an FTP account associated with this Addon Domain.") %]
-                            </label>
-                        </div>
-                    </div>
-                    [% END %]
-
-                    <div id="ftpCreationForm" style="display: none">
-                        <div class="form-group">
-                            <label id="lblFtpUser" for="user">
-                                [% locale.maketext("FTP Username") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div class="input-group">
-                                        <input id="ftpuser" type="text" class="form-control hide-clear-button" name="ftpuser" />
-                                        <span class="input-group-addon">@ <span id="ftpuser-domain"></span></span>
-                                        <input type="hidden" name="root_domain" id="root_domain" value="[% CPANEL.CPDATA.DNS %]" />
-                                    </div>
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="ftpuser_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label id="lblPassword1" for="password1">
-                                [% locale.maketext("Password") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input id="password1" type="password" autocomplete='off' name="pass" class="form-control" />
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password1_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label id="lblPassword2" for="password2">
-                                [% locale.maketext("Password (Again)") %]
-                            </label>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input id="password2" type="password" autocomplete='off' name="pass2" class="form-control" />
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password2_error" class="show_inline"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label id="lblPasswordStrength">
-                                [% locale.maketext("Strength") %]
-                                <span id="why_strong_passwords_link" class="glyphicon glyphicon-info-sign"></span>
-                            </label>
-                            [% INCLUDE _assets/why_strong_passwords.html.tt %]
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <div id="password_strength" class="password_strength"></div>
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <input type="button" id="create_strong_password"
-                                        class="btn btn-default"
-                                        value="[% locale.maketext("Password Generator") %]"
-                                        tabindex="-1" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Add Domain") %]" />
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
                     </div>
                 </form>
             </div><!-- end highlight -->
@@ -211,87 +99,6 @@
             <input id="password1" type="hidden" name="pass" class="form-control" />
             <div style="display:none;" id="password_strength" class="password_strength"></div>
         [% END %]
-
-            <div class="section">
-                <h2>[% locale.maketext("Modify Addon Domain") %]</h2>
-                <div class="search-panel">
-                    <a id="lnkGo" name="go"></a>
-                    <form action="#go" method="post">
-                        <div class="row">
-                            <div class="col-xs-10 col-sm-4">
-                                <input id="searchregex" type="text" class="form-control" size="15" name="searchregex" value="[% FORM.searchregex %]" placeholder="[% locale.maketext("Search") %]"/>
-                            </div>
-                            <div class="col-xs-2 col-sm-8">
-                                <input id="search" type="submit" name="button-search" class="btn btn-primary" value="[% locale.maketext("Go") %]" />
-                                <input id="search_items_per_page" type="hidden" name="itemsperpage" value="[% CPANEL.CPVAR.itemsperpage.html() %]" />
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <table id="subdomaintbl" class="sortable table table-striped responsive-table">
-                    <thead>
-                        <tr>
-                            <th>[% locale.maketext("Addon Domains") %]</th>
-                            <th>[% locale.maketext("Document Root") %]</th>
-                            <th>[% locale.maketext("Subdomain") %]</th>
-                            <th class="sorttable_nosort">[% locale.maketext("Redirects to") %]</th>
-                            <th class="cell-end sorttable_nosort" colspan="2">[% locale.maketext("Actions") %]</th>
-                        </tr>
-                    </thead>
-                [% IF parked_domains.size() %]
-                    [% FOREACH domain IN parked_domains %]
-                        <tr>
-                            <td class="long-column" data-title="[% locale.maketext("Addon Domains") %]">
-                                [% domain.domain.html().replace('\.', '<wbr>.') %]
-                            </td>
-                            <td class="long-column" data-title="[% locale.maketext("Document Root") %]">
-                                <a id="go_filemanger_home_[% domain.domain %]" href="../filemanager/index.html" target="_blank">
-                                    <span class="fas fa-home" title="[% locale.maketext("File Manager: Home Directory") %]"></span>
-                                </a>
-                                <a id="[% domain.domain %]_lnk" href="../filemanager/index.html?dir=[% domain.basedir.uri() %]" title="[% locale.maketext('File Manager: [_1]', domain.basedir.html()) %]">
-                                    /[% domain.basedir.html().replace('\.', '<wbr>.') %]
-                                </a>
-                                <a href="#" id="edit_domain_[% domain.domain %]" onClick="start_change_docroot('[% domain.domain %]','[% domain.subdomain %]','[% domain.rootdomain %]','[% domain.basedir %]'); return false;">
-                                    <span class="glyphicon glyphicon-pencil" title="[% locale.maketext("Edit Domain: [_1]", domain.domain) %]"></span>
-                                </a>
-                            </td>
-                            <td class="long-column" data-title="[% locale.maketext("Subdomain") %]">
-                                [% domain.subdomain.html().replace('\.', '<wbr>.') %]
-                            </td>
-                            <td data-title="[% locale.maketext("Redirects to") %]">
-                                [% domain.status | html %]
-                            </td>
-                            <td data-title="[% locale.maketext("Actions") %]">
-                                <a id="lnkRemove_[% domain.domain %]" class="btn btn-link" href="confirmdodeldomain.html?domain=[% domain.domain.uri() %]&subdomain=[% domain.domainkey.uri() %]&user=[% domain.subdomain.uri() %]&fullsubdomain=[% domain.fullsubdomain.uri() %]">
-                                    <span class="glyphicon glyphicon-trash"></span>
-                                    [% locale.maketext("Remove") %]
-                                </a>
-                                <a id="lnkManageRedirection_[% domain.domain %]" class="btn btn-link" href="doredirectdomain.html?domain=[% domain.domain.uri() %]">
-                                    <span class="glyphicon glyphicon-pencil"></span>
-                                    [% locale.maketext("Manage Redirection") %]
-                                </a>
-                            </td>
-                        </tr>
-                    [% END %]
-                [% ELSIF FORM.searchregex %]
-                        <tr>
-                            <td id="errNoMatching" colspan="5" class="errors">
-                                [% locale.maketext("No matching addon domains found.") %]
-                            </td>
-                        </tr>
-                [% ELSE %]
-                        <tr>
-                            <td id="errNoConfigured" colspan="5" class="errors">
-                                [% locale.maketext("No addon domains are configured.") %]
-                            </td>
-                        </tr>
-                [% END %]
-
-                </table><!-- end subdomaintbl -->
-            [% INCLUDE '_assets/paginate.html.tt' %]
-        </div>
-
     [% END %]<!-- end cpanelfeature addondomains -->
 
 </div><!-- end body-content -->
