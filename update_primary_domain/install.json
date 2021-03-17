@@ -1,1 +1,11 @@
-[{ "type": "link", "id": "update_primary_domain", "icon": "update_primary_domain.png", "group_id": "domains", "name": "update_primary_domain", "order": "99", "uri": "index.html", "featuremanager": true, "target": "update_primary_domain" }]
+[{
+    "type": "link",
+    "id": "update_primary_domain",
+    "icon": "update_primary_domain.png",
+    "group_id": "domains",
+    "name": "Update Primary Domain",
+    "order": "99",
+    "uri": "update_primary_domain/index.html",
+    "featuremanager": true,
+    "target": "update_primary_domain"
+}]
