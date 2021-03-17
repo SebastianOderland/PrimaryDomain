@@ -34,7 +34,7 @@
         </p>
 
 
-        [% current_primary_domain.data %]
+        [% current_primary_domain.data.domain %]
             <div class="section">
                 <h2>[% locale.maketext("Update Primary Domain Name") %]</h2>
                 <form id="mainform" method="post" action="doupdateprimarydomain.html" name="mainform">
