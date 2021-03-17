@@ -1,5 +1,4 @@
 [%
-    use JSON;
     SET CPANEL.CPVAR.dprefix="../";
 
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
