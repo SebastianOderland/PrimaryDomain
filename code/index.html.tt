@@ -7,7 +7,7 @@
     {
         'name' => 'domain',
     });
-%]
+%] 
 
 [% js_code = PROCESS js_block %]
 [% css_code = PROCESS css_block %]
