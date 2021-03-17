@@ -1,11 +1,42 @@
 [%
     SET CPANEL.CPVAR.dprefix="../";
 
+    IF FORM.itemsperpage;
+        SET CPANEL.CPVAR.itemsperpage = FORM.itemsperpage;
+    ELSIF (!(CPANEL.CPVAR.item("itemsperpage")));
+        SET CPANEL.CPVAR.itemsperpage="20";
+    END;
+
+    SET password_strength_result = Api2.exec("PasswdStrength" , "get_required_strength" , {"app" =>"pop" });
+    IF password_strength_result.size();
+        SET password_strength = password_strength_result.0.strength;
+    END;
+
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
 
-    
+    PROCESS '_assets/resource_usage_macro.html.tt';
+
+    Api2.pre_exec("Park", "listaddondomains");
+    api2_result_Park_listaddondomains = Api2.exec("Park" , "listaddondomains" , {
+                "api2_paginate_size"  => CPANEL.CPVAR.itemsperpage.html(),
+                "api2_paginate"       => "1" ,
+                "regex"               => RAW_FORM.searchregex,
+                "api2_paginate_start" => RAW_FORM.api2_paginate_start
+            });
+    Api2.post_exec("Park", "listaddondomains");
+
+    IF api2_result_Park_listaddondomains.size();
+        SET parked_domains = api2_result_Park_listaddondomains;
+    END;
 %]
 
+[%
+    # Note: a MACRO was not used here because we need to be able
+    # to access resource_usage_limits after the block runs
+    SET resource_usage_key = 'addondomains';
+    SET resource_usage_percent_used_to_warn = 80;
+    resource_code = PROCESS resource_usage_block;
+%]
 [% js_code = PROCESS js_block %]
 [% css_code = PROCESS css_block %]
 
