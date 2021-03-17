@@ -105,7 +105,6 @@
 [% BLOCK js_block %]
 <script type="text/javascript">
     PAGE.public_html_subs_only = [% (CPANEL.CPCONF.publichtmlsubsonly) ? "true" : "false" %];
-    //PAGE.REQUIRED_PASSWORD_STRENGTH = parseInt('[% password_strength %]', 10) || 1;
     PAGE.userdomains = [% CPANEL.CPDATA.DOMAINS.json() || '[]' %];
 
     /**
