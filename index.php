@@ -1,33 +1,19 @@
-[%
-    SET CPANEL.CPVAR.dprefix="../";
+<?php
 
-    SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
-%]
+function update_primary_domain($user, $new_primary_domain)
+{
+    $command = "/usr/local/cpanel/bin/whmapi1 modifyacct user=".$user." DNS=".$new_primary_domain;
+    echo shell_exec($command);
+}
 
-[%
-    # Note: a MACRO was not used here because we need to be able
-    # to access resource_usage_limits after the block runs
-    SET resource_usage_key = 'addondomains';
-    SET resource_usage_percent_used_to_warn = 80;
-    resource_code = PROCESS resource_usage_block;
-%]
-[% js_code = PROCESS js_block %]
-[% css_code = PROCESS css_block %]
+$cpanel = new CPANEL(); // Connect to cPanel - only do this once.
 
-[% WRAPPER '_assets/master.html.tt'
-    app_key = "update_primary_domain"
-    include_legacy_stylesheets = 1
-    include_legacy_scripts = 1
-    include_cjt = 1
-    page_styles = css_code
-    page_js = js_code
-    page_scripts = CPANEL.is_debug_mode_enabled() ?
-        ["js/statusbox.js", "js2/addon/index.js"] :
-        ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
--%]
+$listaddondomains = $cpanel->api2(
+    'Park', 'listaddondomains'
+ 
+);
 
-[% INCLUDE _assets/_ajaxapp_header.html.tt %]
-
+echo
 <div class="body-content">
 
     [% IF CPANEL.feature("update_primary_domain") %]
@@ -74,94 +60,4 @@
 
 </div><!-- end body-content -->
 
-[% INCLUDE _assets/_ajaxapp_footer.html.tt %]
-
-[% INCLUDE 'subdomain/include_changedocroot.html.tt' %]
-[% END #wrapper %]
-
-[% BLOCK js_block %]
-
-[% END %]
-
-[% BLOCK css_block %]
-<style type="text/css">
-.no-bottom-margin {
-    margin-bottom: 0;
-}
-
-.extra-top-margin {
-    margin-top: 5px;
-}
-
-/*
-This was added since there is currently a bug with
-Edge where it does not fire events properly when the
-clear button is pressed in input fields.
-See https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/17584515/
-Once that gets resolved, feel free to remove this class and its use.
-*/
-.hide-clear-button::-ms-clear,
-#dir::-ms-clear {
-    display: none;
-}
-
-.search-panel {
-    margin-bottom: 20px;
-}
-
-.long-column {
-    max-width: 350px;
-    word-wrap: break-word;
-}
-
-html[data-style="retro"] .long-column {
-    max-width: 713px;
-}
-
-@media (min-width: 500px) and (max-width: 600px) {
-    .long-column {
-        max-width: 475px;
-    }
-}
-
-@media (min-width: 601px) and (max-width: 767px) {
-    .long-column {
-        max-width: 80px;
-    }
-
-    html[data-style="retro"] .long-column {
-        max-width: 140px;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 991px) {
-    .long-column {
-        max-width: 120px;
-    }
-
-    html[data-style="retro"] .long-column {
-        max-width: 140px;
-    }
-}
-
-@media (min-width: 992px) and (max-width: 1199px) {
-    .long-column {
-        max-width: 195px;
-    }
-
-    html[data-style="retro"] .long-column {
-        max-width: 140px;
-    }
-}
-
-@media (min-width: 1200px) {
-    .long-column {
-        max-width: 265px;
-    }
-
-    html[data-style="retro"] .long-column {
-        max-width: 140px;
-    }
-}
-</style>
-[% END %]
+?>
