@@ -5,6 +5,6 @@
     "group_id": "domains",
     "name": "Update Primary Domain",
     "order": "99",
-    "uri": "update_primary_domain/index.pm",
+    "uri": "update_primary_domain/index.live.pl",
     "featuremanager": true
 }]
