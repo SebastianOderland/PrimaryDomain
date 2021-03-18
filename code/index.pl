@@ -12,8 +12,8 @@ sub do_MyExample_stuff {
     my $string_to_mess_with = shift;
 
     my $result = Cpanel::Wrap::send_cpwrapd_request(
-        'namespace' => 'MyNamespace',
-        'module'    => 'MyExample',
+        'namespace' => 'UpdatePrimaryDomain',
+        'module'    => 'UpdatePrimaryDomain',
         'function'  => $thing_to_do,
         'data'      => $string_to_mess_with
     );
