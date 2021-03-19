@@ -1,5 +1,7 @@
 [%
-    SET CPANEL.CPVAR.dprefix="../";
+    USE Dumper;
+
+    #SET CPANEL.CPVAR.dprefix="../";
 
     SET daemon_info = execute("Ftp", "get_ftp_daemon_info");
 
@@ -7,7 +9,12 @@
     {
         'name' => 'domain',
     });
-%] 
+
+   SET result = execute("NewUpdatePrimaryDomain", "update_primary_domain",
+   {
+        "name" => "new.primary.domain"
+   });
+%]
 
 
 [% js_code = PROCESS js_block %]
@@ -33,7 +40,9 @@
         <p id="descAddon" class="description">
             [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>
-
+            [% Dumper.dump(result) %]
+            <br>
+            [% Dumper.dump(current_primary_domain) %]
             [% roots %]
             <div class="section">
                 <h2>[% locale.maketext("Update Primary Domain Name") %]</h2>
