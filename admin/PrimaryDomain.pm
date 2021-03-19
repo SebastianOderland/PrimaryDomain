@@ -1,4 +1,4 @@
-package Cpanel::Admin::Modules::ChangePrimaryDomain::ChangePrimaryDomain;
+package Cpanel::Admin::Modules::PrimaryDomain::PrimaryDomain;
 
 use strict;
 use warnings;

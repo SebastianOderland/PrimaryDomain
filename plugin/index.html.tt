@@ -9,7 +9,7 @@
         'name' => 'domain',
     }).data.domain;
 
-    SET get_info = execute("ChangePrimaryDomain", "get_info").data;
+    SET get_info = execute("PrimaryDomain", "get_info").data;
 %]
 
 
@@ -17,13 +17,13 @@
 [% css_code = PROCESS css_block %]
 
 [% WRAPPER '_assets/master.html.tt'
-    app_key = "change_primary_domain"
+    app_key = "primary_domain"
     include_legacy_stylesheets = 1
     include_legacy_scripts = 1
     include_cjt = 1
     page_styles = css_code
     page_js = js_code
-    page_scripts = ["js/statusbox.js", "js2/change_primary_domain/index.js"] #CPANEL.is_debug_mode_enabled() ?
+    page_scripts = ["js/statusbox.js", "js2/primary_domain/index.js"] #CPANEL.is_debug_mode_enabled() ?
     #    ["js/statusbox.js", "js2/addon/index.js"] :
     #    ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
 -%]
@@ -32,7 +32,7 @@
 
 <div class="body-content">
 
-    [% IF CPANEL.feature("change_primary_domain") %]
+    [% IF CPANEL.feature("primary_domain") %]
         <p id="descAddon" class="description">
             [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>

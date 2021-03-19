@@ -2,7 +2,7 @@
     SET CPANEL.CPVAR.dprefix="../";
     USE Dumper;
 
-    SET result = execute("ChangePrimaryDomain", "change_primary_domain",
+    SET result = execute("PrimaryDomain", "change_primary_domain",
     {
         "name" => FORM.new_primary_domain
     });
@@ -19,7 +19,7 @@
 %]
 
 [% WRAPPER '_assets/master.html.tt'
-    app_key = "change_primary_domain"
+    app_key = "primary_domain"
     include_legacy_stylesheets = 1
     include_legacy_scripts = 1
     include_cjt = 1

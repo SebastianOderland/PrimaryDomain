@@ -1,4 +1,4 @@
-package Cpanel::API::ChangePrimaryDomain;
+package Cpanel::API::PrimaryDomain;
 
 use strict;
 use warnings;
@@ -71,7 +71,7 @@ sub change_primary_domain() {
     
 
 
-    my $command_output = Cpanel::AdminBin::Call::call('ChangePrimaryDomain', 'ChangePrimaryDomain', 'AdminChangePrimaryDomain', { "user" => $Cpanel::user, "new_primary_domain" => $new_primary_domain});
+    my $command_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain', { "user" => $Cpanel::user, "new_primary_domain" => $new_primary_domain});
     my $returns = $command_output;
     $result->data($returns);
 

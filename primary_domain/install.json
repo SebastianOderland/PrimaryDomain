@@ -1,0 +1,10 @@
+[{
+    "type": "link",
+    "id": "primary_domain",
+    "icon": "primary_domain.svg",
+    "group_id": "domains",
+    "name": "Primary Domain",
+    "order": "99",
+    "uri": "primary_domain/index.html",
+    "featuremanager": true
+}]
