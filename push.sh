@@ -4,7 +4,7 @@ update_description=$1
 mkdir plugin_compressed
 cp -R plugin/. plugin_compressed/
 tar -czvf plugin_compressed/change_primary_domain.tar.gz change_primary_domain
-tar -czvf plugin.tar.gz plugin_compressed
+tar -czvfC plugin.tar.gz plugin_compressed
 rm -rf plugin_compressed
 
 # GIT
