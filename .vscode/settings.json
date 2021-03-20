@@ -8,7 +8,6 @@
         "**/**.meta": true,
         "backup_code": true,
         "**/*.gz": true,
-        "**/*.png": true,
         "change_primary_domain/meta.json": true
     },
     "explorerExclude.backup": null
