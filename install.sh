@@ -6,7 +6,7 @@ ssh ${SERVER} """
 
 echo "Installing [Change Primary Domain] Plugin"
 
-curl -s https://raw.githubusercontent.com/SebastianOderland/update_primary_domain/main/plugin.tar.gz > /root/tmp/plugin_files.tar.gz;
+curl -s -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/SebastianOderland/update_primary_domain/main/plugin.tar.gz > /root/tmp/plugin_files.tar.gz;
 
 tar -xvzf /root/tmp/plugin_files.tar.gz --directory /root/tmp;
 
@@ -23,3 +23,5 @@ echo "Installation is complete!"
 #rm -rf /root/tmp/plugin
 #rm -rf /root/tmp/plugin.tar.gz
 #rm /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain/
+
+#Slash_And_Or_Dashes99
