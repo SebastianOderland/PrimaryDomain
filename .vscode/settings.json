@@ -1,0 +1,15 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/**.meta": true,
+        "backup_code": true,
+        "**/*.gz": true,
+        "**/*.png": true,
+        "change_primary_domain/meta.json": true
+    },
+    "explorerExclude.backup": null
+}
