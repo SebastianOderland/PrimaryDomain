@@ -6,8 +6,7 @@
     "group_id": "domains",
     "name": "Change Primary Domain",
     "order": "99",
-    "uri": "change_primary_domain/index.html.tt",
-    "featuremanager": true,
-    "target": "index.html"
+    "uri": "change_primary_domain/index.html",
+    "featuremanager": true
   }
 ]
