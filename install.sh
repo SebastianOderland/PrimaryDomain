@@ -11,12 +11,12 @@ curl -s https://raw.githubusercontent.com/SebastianOderland/update_primary_domai
 tar -xvzf /root/tmp/plugin_files.tar.gz --directory /root/tmp;
 
 
-/usr/local/cpanel/scripts/install_plugin /root/tmp/plugin_files/change_primary_domain.tar.gz
 
 """
 
 echo "Installation is complete!"
 
+#/usr/local/cpanel/scripts/install_plugin /root/tmp/plugin_files/change_primary_domain.tar.gz
 #mkdir -p /usr/local/cpanel/base/frontend/paper_lantern/change_primary_domain
 #mv -v /root/tmp/plugin_files/* /usr/local/cpanel/base/frontend/paper_lantern/change_primary_domain/
 #/usr/local/cpanel/scripts/install_plugin /usr/local/cpanel/base/frontend/paper_lantern/change_primary_domain/change_primary_domain.tar.gz
