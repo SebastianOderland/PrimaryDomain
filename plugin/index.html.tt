@@ -7,7 +7,9 @@
     SET current_primary_domain = execute("Variables", "get_user_information",
     {
         'name' => 'domain',
-    });
+    }).data.domain;
+
+    SET get_info = execute("ChangePrimaryDomain", "get_info").data;
 %]
 
 
@@ -21,7 +23,7 @@
     include_cjt = 1
     page_styles = css_code
     page_js = js_code
-    #page_scripts = CPANEL.is_debug_mode_enabled() ?
+    page_scripts = ["js/statusbox.js", "js2/change_primary_domain/index.js"] #CPANEL.is_debug_mode_enabled() ?
     #    ["js/statusbox.js", "js2/addon/index.js"] :
     #    ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
 -%]
@@ -36,35 +38,59 @@
         </p>
             [% roots %]
             <div class="section">
-                <h2>[% locale.maketext("Change Primary Domain Name") %]</h2>
+                <h2>[% locale.maketext("Create new Primary Domain") %]</h2>
                 <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
                     <!-- prevent password autofill -->
                     <input type="text" style="display:none">
                     <input type="password" autocomplete='off' style="display:none">
                     <div class="form-group">
-                        <label id="lblDomain" for="domain">
-                            [% locale.maketext("New Primary Domain Name") %]
+                        <label id="lblDomain" for="new_primary_domain">
+                            [% locale.maketext("New Primary Domain") %]
                         </label>
                         <div class="row">
                             <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                <input value="[% current_primary_domain.data.domain %]" id="new_primary_domain" type="text" class="form-control hide-clear-button" name="new_primary_domain" />
-                                <div id="domain_info" class="hide">
-                                    <div class="alert alert-info no-bottom-margin extra-top-margin" role="alert">
-                                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-                                        <div class="alert-message">[% locale.maketext('This addon domain looks like a subdomain of your current domain or another domain you own. Would you like to [output,url,_1,create a subdomain instead]?', '../subdomain/index.html') %]</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                <div id="domain_error" class="show_inline"></div>
+                                <input value="[% current_primary_domain %]" id="new_primary_domain" type="text" class="form-control hide-clear-button" name="new_primary_domain" />
                             </div>
                         </div>
                     </div>
-
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label id="keep_old_primary_domain">
+                                <input type="checkbox" id="keep_old_primary_domain" name="keep_old_primary_domain" />
+                                [% locale.maketext("Keep current Primary Domain as an Addon Domain.") %]
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Create") %]" />
+                    </div>
+                </form>       
+            </div>
+            <div class="section">
+                <h2>[% locale.maketext("Change Primary Domain") %]</h2>
+                <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
+                    <!-- prevent password autofill -->
+                    <input type="text" style="display:none">
+                    <input type="password" autocomplete='off' style="display:none">
+                    <div class="form-group">
+                        <label id="lblDomain" for="new_primary_domain">
+                            [% locale.maketext("New Primary Domain") %]
+                        </label>
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                <input value="[% current_primary_domain %]" id="new_primary_domain" type="select" class="form-control hide-clear-button" name="new_primary_domain" />
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Change") %]" />
                     </div>
-                </form>
+                </form>       
+            </div>
+            <div class="section">
+                <h2>[% locale.maketext("Current Information") %]</h2>
+                <p>[% locale.maketext("Name: ") %] <b>[% current_primary_domain %]</b></p>
+                [% Dumper.dump(get_info) %]
             </div>
     [% END %]
 

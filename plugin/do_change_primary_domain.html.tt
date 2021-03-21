@@ -2,10 +2,20 @@
     SET CPANEL.CPVAR.dprefix="../";
     USE Dumper;
 
-   SET result = execute("ChangePrimaryDomain", "change_primary_domain",
-   {
+    SET result = execute("ChangePrimaryDomain", "change_primary_domain",
+    {
         "name" => FORM.new_primary_domain
-   });
+    });
+
+    SET change_primary_domain_error = CPANEL.CPERROR.changeprimarydomain;
+    SET errors = [];
+    SET successes = [];
+
+    IF change_primary_domain_error;
+        errors.push(change_primary_domain_error.html());
+    ELSE;
+        successes.push(locale.maketext("Successfully changed the primary domain to “[_1]”.", FORM.new_primary_domain));
+    END;
 %]
 
 [% WRAPPER '_assets/master.html.tt'
@@ -19,8 +29,6 @@
     #    ["js/statusbox.js", "js2/addon/index.js"] :
     #    ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
 -%]
-
-[% FORM.new_primary_domain %]
 
 <div class="body-content">
     [% IF errors.size() > 0 %]
@@ -42,6 +50,8 @@
                 [% msg %]
             </div>
             [% END %]
+            <br>
+            <br>
             [% Dumper.dump(result) %]
         </div>
     [% END %]
