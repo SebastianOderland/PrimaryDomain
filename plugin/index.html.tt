@@ -10,6 +10,16 @@
     }).data.domain;
 
     SET get_info = execute("PrimaryDomain", "get_info").data;
+
+    SET domains_resp = execute("DomainInfo", "list_domains");
+
+    IF domains_resp.data;
+        SET list_domains = [];
+        list_domains = list_domains.import(domains_resp.data.addon_domains);
+        list_domains = list_domains.sort;
+    ELSIF domains_resp.errors;
+        SET domains_err = domains_resp.errors.0;
+    END;
 %]
 
 
@@ -33,11 +43,10 @@
 <div class="body-content">
 
     [% IF CPANEL.feature("primary_domain") %]
-        <p id="descAddon" class="description">
+        <p id="descPrimaryDomain" class="description">
             [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>
-            [% roots %]
-            <div class="section">
+            <div class="section" id="create-section">
                 <h2>[% locale.maketext("Create new Primary Domain") %]</h2>
                 <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
                     <!-- prevent password autofill -->
@@ -57,40 +66,88 @@
                         <div class="checkbox">
                             <label id="keep_old_primary_domain">
                                 <input type="checkbox" id="keep_old_primary_domain" name="keep_old_primary_domain" />
-                                [% locale.maketext("Keep current Primary Domain as an Addon Domain.") %]
+                                [% locale.maketext("Delete old Primary Domain") %]
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Create") %]" />
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
                     </div>
                 </form>       
             </div>
-            <div class="section">
+            <br>
+            <br>
+            <div class="section" id="change-section">
                 <h2>[% locale.maketext("Change Primary Domain") %]</h2>
-                <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
+                <form id="mainform" method="post" action="test_form.html" name="test_form">
                     <!-- prevent password autofill -->
                     <input type="text" style="display:none">
                     <input type="password" autocomplete='off' style="display:none">
                     <div class="form-group">
-                        <label id="lblDomain" for="new_primary_domain">
+                        <label for="new_primary_domain">
                             [% locale.maketext("New Primary Domain") %]
                         </label>
                         <div class="row">
                             <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                <input value="[% current_primary_domain %]" id="new_primary_domain" type="select" class="form-control hide-clear-button" name="new_primary_domain" />
+                                <select id="new_existing_primary_domain" name="new_primary_domain" class="form-control">
+                                    [% FOREACH domain IN list_domains %]
+                                        <option value=[% domain %]>[% domain %]</option>
+                                    [% END %]
+                                </select>
                             </div>
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6"></div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Change") %]" />
+                        <input checked="true" type="checkbox" id="keep_old_primary_domain" name="keep_old_primary_domain" style="display: none"/>
+                    </div>
+                    <div class="form-group">
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
                     </div>
                 </form>       
             </div>
-            <div class="section">
-                <h2>[% locale.maketext("Current Information") %]</h2>
-                <p>[% locale.maketext("Name: ") %] <b>[% current_primary_domain %]</b></p>
-                [% Dumper.dump(get_info) %]
+            <br>
+            <br>
+            <div class="section" id="test-section">
+                <h2>[% locale.maketext("TEST FORM") %]</h2>
+                <form id="test_form" method="post" action="test_form.html" name="test_form">
+                    <!-- prevent password autofill -->
+                    <input type="text" style="display:none">
+                    <input type="password" autocomplete='off' style="display:none">
+                    <div class="form-group">
+                        <label for="new_primary_domain">
+                            [% locale.maketext("New Primary Domain") %]
+                        </label>
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                <select id="new_existing_primary_domain" name="new_primary_domain" class="form-control">
+                                    [% FOREACH domain IN list_domains %]
+                                        <option value=[% domain %]>[% domain %]</option>
+                                    [% END %]
+                                </select>
+                            </div>
+                            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input checked="true" type="checkbox" id="keep_old_primary_domain" name="keep_old_primary_domain" style="display: none"/>
+                    </div>
+                    <div class="form-group">
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
+                    </div>
+                </form>       
+            </div>
+            <br>
+            <br>
+            <div class="section" id="info-section">
+                <h2>[% locale.maketext("Todo") %]</h2>
+                <ul>
+                <li>Save the DNS zones of old and new Primary Domain.</li>
+                <li>Upload the DNS zones of old and new Primary Domain.</li>
+                <li>Fix E-mailaccounts.</li>
+                <li>Allow creation of new Primary Domain, or just changing the Primary Domain?</li>
+                </ul>
+                <!--[% Dumper.dump(get_info) %]-->
             </div>
     [% END %]
 

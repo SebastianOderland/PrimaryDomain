@@ -20,14 +20,6 @@
 
 [% WRAPPER '_assets/master.html.tt'
     app_key = "primary_domain"
-    include_legacy_stylesheets = 1
-    include_legacy_scripts = 1
-    include_cjt = 1
-    page_styles = css_code
-    page_js = js_code
-    #page_scripts = CPANEL.is_debug_mode_enabled() ?
-    #    ["js/statusbox.js", "js2/addon/index.js"] :
-    #    ["js/statusbox_optimized.js", "js2-min/addon/index.js"]
 -%]
 
 <div class="body-content">
@@ -53,6 +45,16 @@
             <br>
             <br>
             [% Dumper.dump(result) %]
+            <div class="alert-message">
+                [% FOREACH res IN result.data %]
+                <p>[% res.key %] : [% res.value %]</p>
+                [% END %]
+            </div>
+            <div class="alert-message">
+                [% FOREACH res IN result.info %]
+                <p>[% res.key %] : [% res.value %]</p>
+                [% END %]
+            </div>
         </div>
     [% END %]
 
