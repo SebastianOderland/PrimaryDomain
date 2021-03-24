@@ -1,4 +1,4 @@
-# TODO
+## TODO
 
 - Save the DNS zones of old and new Primary Domain.
 - Upload the DNS zones of old and new Primary Domain.

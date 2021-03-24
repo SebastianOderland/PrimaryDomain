@@ -141,14 +141,6 @@
             <br>
             <br>
             <div class="section" id="info-section">
-                <h2>[% locale.maketext("Todo") %]</h2>
-                <ul>
-                <li>Save the DNS zones of old and new Primary Domain.</li>
-                <li>Upload the DNS zones of old and new Primary Domain.</li>
-                <li>Fix E-mailaccounts.</li>
-                <li>Allow creation of new Primary Domain, or just changing the Primary Domain?</li>
-                </ul>
-                <!--[% Dumper.dump(get_info) %]-->
             </div>
             
     [% END %]
