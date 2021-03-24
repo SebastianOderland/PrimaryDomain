@@ -46,7 +46,7 @@
         <p id="descPrimaryDomain" class="description">
             [% locale.maketext("Read more about this [output,url,_1,here,target,_2,id,_3].", "https://www.oderland.se/support/artikel/hur-byter-jag-huvuddoman-pa-mitt-webbhotellkonto/", "_blank", "lnkPimaryDomainDocumentation") %]
         </p>
-        <!--
+            <!--
             <div class="section" id="create-section">
                 <h2>[% locale.maketext("Create new Primary Domain") %]</h2>
                 <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
@@ -150,6 +150,7 @@
                 </ul>
                 <!--[% Dumper.dump(get_info) %]-->
             </div>
+            
     [% END %]
 
 </div>
@@ -160,7 +161,37 @@
 [% END #wrapper %]
 
 [% BLOCK js_block %]
+<script type="text/javascript">
 
+function createDiv(responsetext)
+{
+    //var _body = document.getElementsByTagName('body')[0];
+    var _info_section = document.getElementById("info-section");
+    var _div = document.createElement('div');
+    _div.innerHTML = responsetext;
+    //_body.appendChild(_div);
+    _info_section.appendChild(_div);
+}
+
+function httpGet(theUrl)
+{
+    xmlhttp=new XMLHttpRequest();
+
+    xmlhttp.onreadystatechange=function()
+    {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+            createDiv(xmlhttp.responseText);
+        }
+    }
+    
+    xmlhttp.open("GET", theUrl, false);
+    xmlhttp.send();
+}
+
+httpGet("https://raw.githubusercontent.com/SebastianOderland/PrimaryDomain/main/README.md");
+
+</script>
 [% END %]
 
 [% BLOCK css_block %]

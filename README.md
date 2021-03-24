@@ -1,6 +1,10 @@
 Sebastian Oderland
 
 TODO
+<ul>
+    <li>4</li>
+    <li>4</li>
+</ul>
 
 1. Delete old domain, and save info.
 2. Run modifyacct.
