@@ -44,10 +44,16 @@
             [% END %]
             <br>
             <br>
-            [% Dumper.dump(result.data.output) %]
+            [% Dumper.dump(result.data.output_hash) %]
+            <br>
+            <br>
+            [% Dumper.dump(result.data.output_string) %]
             <br>
             <br>
             [% Dumper.dump(result.data.returns) %]
+            <br>
+            <br>
+            [% Dumper.dump(result.data) %]
             <br>
             <br>
             [% Dumper.dump(result) %]

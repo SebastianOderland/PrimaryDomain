@@ -75,12 +75,12 @@
                     </div>
                 </form>       
             </div>
+            <br>
+            <br>
             -->
-            <br>
-            <br>
             <div class="section" id="change-section">
                 <h2>[% locale.maketext("Change Primary Domain") %]</h2>
-                <form id="mainform" method="post" action="test_form.html" name="test_form">
+                <form id="mainform" method="post" action="do_change_primary_domain.html" name="mainform">
                     <!-- prevent password autofill -->
                     <input type="text" style="display:none">
                     <input type="password" autocomplete='off' style="display:none">
