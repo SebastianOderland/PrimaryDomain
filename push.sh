@@ -1,5 +1,7 @@
 update_description=$1
 
+pandoc -f markdown README.md > README.html
+
 # COPY AND ZIP
 mkdir plugin_files
 cp -R plugin/. plugin_files/
