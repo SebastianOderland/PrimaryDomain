@@ -184,12 +184,12 @@ function httpGet(theUrl)
             createDiv(xmlhttp.responseText);
         }
     }
-    
+
     xmlhttp.open("GET", theUrl, false);
     xmlhttp.send();
 }
 
-httpGet("https://raw.githubusercontent.com/SebastianOderland/PrimaryDomain/main/README.md");
+httpGet("https://raw.githubusercontent.com/SebastianOderland/PrimaryDomain/main/README.html");
 
 </script>
 [% END %]
