@@ -7,12 +7,13 @@
 5. Get the new Subdomains and DNS Zones
 6. Import old DNS Records into new DNS Zones
 
+## Notes
+
+- E-mailaccounts does not seem to update after changing primary domain, which is good.
 ## TODO
 
-- Redo DNS.
-- Fix E-mailaccounts.
-- Increase Serial Number ?
 - Allow current addon domain to have subdomains.
+- Probably redo the process of importing DNS-Records.
   
 - Either check all the "potential" outcome before executing anything, or store a backup of the data.
 - Update primary domain in WHMCS.
