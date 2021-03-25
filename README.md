@@ -14,8 +14,10 @@ E-mailaccounts does not seem to update after changing primary domain.
 So it seems to be working for now.
 
 - DNS
+Almost done.
 
 - Documentroot
+Incomplete.
 
 ## TODO
 
