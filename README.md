@@ -11,8 +11,7 @@
 
 - E-Mail<br>
 E-mailaccounts does not seem to update after changing primary domain.
-So it seems to be working for now.
-"Seems" to be done.
+So it "seems" to be done.
 
 - DNS<br>
 Almost done.
