@@ -13,8 +13,11 @@
 E-mailaccounts does not seem to update after changing primary domain.<br>
 So it "seems" to be done.
 
+- Subdomains<br>
+Incomplete.
+
 - DNS<br>
-Almost done.
+Maybe done?
 
 - Documentroot<br>
 Done!
