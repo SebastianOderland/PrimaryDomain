@@ -9,11 +9,17 @@
 
 ## Notes
 
-- E-mailaccounts does not seem to update after changing primary domain, which is good.
+- E-Mail
+E-mailaccounts does not seem to update after changing primary domain.
+So it seems to be working for now.
+
+- DNS
+
 ## TODO
 
-- Allow current addon domain to have subdomains.
-- Probably redo the process of importing DNS-Records.
+- The Addon Domain needs to have public_html as document root before changing it to Primary Domain.
+- Allow current addon domain to have subdomains
+- Probably redo the process of importing DNS-Records
   
-- Either check all the "potential" outcome before executing anything, or store a backup of the data.
-- Update primary domain in WHMCS.
+- Either check all the "potential" outcome before executing anything, or store a backup of the data
+- Update primary domain in WHMCS
