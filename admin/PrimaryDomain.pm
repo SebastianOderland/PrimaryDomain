@@ -8,7 +8,6 @@ $Data::Dumper::Useqq = 1;
 use JSON;
 
 use parent 'Cpanel::Admin::Base';
-use Whostmgr::API::1::DNS ();
 use cPanel::PublicAPI;
 use experimental "switch";
 
@@ -16,9 +15,10 @@ use feature qw/switch/;
 
 my $cp = cPanel::PublicAPI->new("host" => "cpanel-dev-cl7.oderland.com");
 
-use constant _actions => (
+use constant _actions =>
+(
     'AdminChangePrimaryDomain',
-    'AdminGetDNSZones',
+    'AdminGetDNSZone',
     'AdminGetSubDomains',
     'AdminAddDNSRecord',
     'AdminEditDNSRecord',
@@ -60,7 +60,7 @@ sub AdminGetSubDomains {
     return $subdomains;
 }
 
-sub AdminGetDNSZones {
+sub AdminGetDNSZone {
     my $class = shift;
 
     my $self = {
@@ -68,13 +68,12 @@ sub AdminGetDNSZones {
     };
 
     my $user = $self->{_args}{user};
-    my $old_domain = $self->{_args}{old_domain};
-    my $new_domain = $self->{_args}{new_domain};
+    my $domain = $self->{_args}{domain};
 
-    my $old_primary_domain_zone_output = $cp->whm_api('dumpzone', { 'domain' => $old_domain });
-    my $new_primary_domain_zone_output = $cp->whm_api('dumpzone', { 'domain' => $new_domain });
+    my @dns_zone = $cp->whm_api('dumpzone', { 'domain' => $domain });
+    my @new_dns_zone = $dns_zone[0]->{data}->{zone}[0]->{record};
 
-    return ($old_primary_domain_zone_output, $new_primary_domain_zone_output);
+    return @new_dns_zone;
 }
 
 sub AdminRemoveDNSRecord {
@@ -92,9 +91,10 @@ sub AdminRemoveDNSRecord {
     my $record_type = $output->{data}->{record}[0]->{type};
     if ($record_type eq "A" || $record_type eq "CNAME" || $record_type eq "MX" || $record_type eq "TXT") {
         my $output2 = $cp->whm_api('removezonerecord', { 'zone' => $domain, "line" => $line });
+        return $output2;
     }
 
-    return $output;
+    return $record_type;
 }
 
 sub AdminAddDNSRecord {

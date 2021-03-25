@@ -4,14 +4,17 @@
 
     SET result = execute("PrimaryDomain", "change_primary_domain",
     {
-        "name" => FORM.new_primary_domain
+        "new_domain" => FORM.new_primary_domain
     });
 
     SET change_primary_domain_error = CPANEL.CPERROR.changeprimarydomain;
     SET errors = [];
     SET successes = [];
-
-    IF change_primary_domain_error;
+    
+    IF result.errors or change_primary_domain_error;
+        FOREACH error_msg IN result.errors;
+            errors.push(error_msg);
+        END;
         errors.push(change_primary_domain_error.html());
     ELSE;
         successes.push(locale.maketext("Successfully changed the primary domain to “[_1]”.", FORM.new_primary_domain));
@@ -27,9 +30,9 @@
         <div id="addError" class="alert alert-danger" role="alert">
             <span id="addErrorImg" class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
             [% FOREACH msg = errors %]
-            <div class="alert-message">
-                [% msg %]
-            </div>
+                <div class="alert-message">
+                    [% msg %]
+                </div>
             [% END %]
         </div>
     [% END %]
@@ -38,38 +41,20 @@
         <div id="addSuccess" class="alert alert-success" role="alert">
             <span id="addSuccessImg" class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
             [% FOREACH msg = successes %]
-            <div class="alert-message">
-                [% msg %]
-            </div>
+                <div class="alert-message">
+                    [% msg %]
+                </div>
             [% END %]
             <br>
             <br>
-            [% Dumper.dump(result.data.output_hash) %]
-            <br>
-            <br>
-            [% Dumper.dump(result.data.output_string) %]
-            <br>
-            <br>
-            [% Dumper.dump(result.data.returns) %]
-            <br>
-            <br>
-            [% Dumper.dump(result.data) %]
-            <br>
-            <br>
-            [% Dumper.dump(result) %]
-            <br>
-            <br>
-            [% Dumper.dump(result) %]
-            <div class="alert-message">
-                [% FOREACH res IN result.data %]
-                <p>[% res.key %] : [% res.value %]</p>
+            <!--To order the hash I put it inside an array-->
+            [% FOREACH output_item IN result.data %]
+                [% FOREACH key IN output_item.keys %]
+                    <h6><b>[% key %]</b></h6>
+                    <p>[% Dumper.dump(output_item.$key) %]</p>
+                    <br>
                 [% END %]
-            </div>
-            <div class="alert-message">
-                [% FOREACH res IN result.info %]
-                <p>[% res.key %] : [% res.value %]</p>
-                [% END %]
-            </div>
+            [% END %]
         </div>
     [% END %]
 

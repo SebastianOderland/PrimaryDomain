@@ -2,394 +2,292 @@ package Cpanel::API::PrimaryDomain;
 
 use strict;
 use warnings;
-use JSON;
-use JSON::XS qw( decode_json );
 
 use Cpanel::AdminBin::Call;
 use Cpanel::Api2::Exec;
-
-use Whostmgr::API::1::DNS ();
+use Whostmgr::API::1::DNS();
 use feature qw/switch/;
-
-
-sub get_info() {
-    my ( $args, $result ) = @_;
-
-    my @wanted    = $args->get_multiple('name');
-    my $variables = {
-        %Cpanel::CPDATA,
-        %Cpanel::USERDATA,
-        cpanel_root_directory => $Cpanel::CONF{root},
-    };
-
-    my %list_of_output = ();
-
-    foreach my $key (keys %Cpanel::CPDATA)
-    {
-        my $value = %Cpanel::CPDATA{$key};
-        $list_of_output{$key} = $value;
-        #push @list_of_output, "$key = $value"
-    }
-
-    foreach my $key (keys %Cpanel::USERDATA)
-    {
-        my $value = %Cpanel::USERDATA{$key};
-        $list_of_output{$key} = $value;
-        #push @list_of_output, "$key = $value"
-    }
-
-    foreach my $key (keys %Cpanel::CONF)
-    {
-        my $value = %Cpanel::CONF{$key};
-        $list_of_output{$key} = $value;
-        #push @list_of_output, "$key = $value"
-    }
-
-    my $returns = %list_of_output;
-    $result->data(%list_of_output);
-}
+use List::Util qw(any);
 
 sub change_primary_domain() {
     my ( $args, $result ) = @_;
 
-    my @wanted    = $args->get_multiple('name');
-    my $variables = {
-        %Cpanel::CPDATA,
-        %Cpanel::USERDATA,
-        cpanel_root_directory => $Cpanel::CONF{root},
-    };
+    # ARRAY FOR LOGGING OUTPUT
+    my @output;
 
-    my $list_of_output = "";
-
-    foreach my $key (keys %Cpanel::CPDATA)
-    {
-        my $value = %Cpanel::CPDATA{$key};
-        $list_of_output = $list_of_output . "$key = $value     |||||       \n";
-    }
-
-    my $new_domain = @wanted[0];
     my $old_domain = %Cpanel::CPDATA{DNS};
+    my $new_domain = $args->get('new_domain');
+    
+    push (@output, {"Output: old_domain" => $old_domain});
+    push (@output, {"Output: new_domain" => $new_domain});
 
-    if ($new_domain eq $old_domain) {
+    if ($old_domain eq $new_domain) {
         $Cpanel::CPERROR{'changeprimarydomain'} = "Old and new primary domain are the same!";
         return;
     }
 
-    my $new_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
-    {
-        'domain'    => $new_domain,
-        'return_https_redirect_status' => '0',
-    })->{data};
 
-    my $old_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
-    {
-        'domain'    => $old_domain,
-        'return_https_redirect_status' => '0',
-    })->{data};
+    # STORE OLD SUBDOMAINS
+    my @old_subdomains = get_subdomains();
+    push (@output, {"Output: get_old_subdomains" => \@old_subdomains});
 
-    my $new_domain_servername = $new_domain_info->{servername};
-    my $old_domain_servername = $old_domain_info->{servername};
-
-    $new_domain_servername =~ s/.$old_domain/_$old_domain/g;
-    
-    my $deladdondomain_output;
-    my $change_primary_domain_output;
-    
+    # STORE OLD DNS ZONES
+    my @old_dns_zone_for_old_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $old_domain});
+    my @old_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
 
 
+    # DELETE CURRENT ADDON DOMAIN
+    push (@output, {"Output: delete_addon_domain" => delete_addon_domain($new_domain)});
 
 
+    # CHANGE PRIMARY DOMAIN
+    push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $new_domain })});
 
 
+    # CREATE NEW ADDON DOMAIN
+    push (@output, {"Output: create_addon_domain" => create_addon_domain($old_domain)});
 
 
-
-    # GET THE OLD DNS ZONES
-    my @old_domain_zones = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZones', { "user" => $Cpanel::user, "old_domain" => $old_domain, "new_domain" => $new_domain});
-    my @old_old_domain_dns_zone = @old_domain_zones[0]->{data}->{zone}[0]->{record};
-    my @old_new_domain_dns_zone = @old_domain_zones[1]->{data}->{zone}[0]->{record};
+    # STORE NEW DNS ZONES
+    my @new_dns_zone_for_old_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $old_domain});
+    my @new_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
 
 
-    # DELETE THE NEW PRIMARY DOMAIN
-    if ($new_domain_info->{type} eq "addon_domain")
-    {
-        my $command = "cpapi2 AddonDomain deladdondomain domain=$new_domain subdomain=$new_domain_servername";
-        $deladdondomain_output = `$command`;
-        #Cpanel::Api2::Exec::api2_preexec("AddonDomain", "deladdondomain");
-        #$command_output = Cpanel::Api2::Exec::api2_exec("AddonDomain", "deladdondomain",
-            #{
-            #    "domain" => $new_domain, 
-            #    "subdomain" => "jpadjpofa_sebode-test2.hemsida.eu"
-            #}, "api2_deladdondomain");
-        #$command_output = Cpanel::Api2::Exec::api2_exec("AddonDomain", "deladdondomain", {"domain" => $new_domain, "subdomain" => "jpadjpofa_sebode-test2.hemsida.eu"});#$new_domain_servername});
-        #Cpanel::Api2::Exec::api2_postexec("AddonDomain", "deladdondomain");
-    }
-    elsif ($new_domain_info->{domain} eq "") {
-        my $change_primary_domain_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain', { "user" => $Cpanel::user, "new_domain" => $new_domain});
-        
-        my $returns = $change_primary_domain_output;
-        $result->data($returns);
-        return 1;
-    }
-    else
-    {
-        $Cpanel::CPERROR{'changeprimarydomain'} = "[$new_domain] is not an Addon Domain!";
-        return 0;
-    }
+    # STORE NEW SUBDOMAINS
+    my @new_subdomains = get_subdomains();
+    push (@output, {"Output: get_new_subdomains" => \@new_subdomains});
 
 
+    # IMPORT OLD DNS RECORDS TO NEW DNS ZONE
+    my @fix_old_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
+    push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_output});
 
-    # CREATE THE PRIMARY DOMAIN
-    my $change_primary_domain_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain', { "user" => $Cpanel::user, "new_domain" => $new_domain});
-
-
-
-    # RECREATE THE OLD DOMAIN AS ADDON
-    my $old_domain_info_documentroot = $old_domain_info->{documentroot};
-    my $command = "cpapi2 AddonDomain addaddondomain dir=public_html newdomain=$old_domain subdomain=$old_domain_servername";
-    my $addaddondomain_output = `$command`;
+    my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
+    push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
 
 
+    $result->data(\@output);
+    return 1;
+}
 
-    # GET THE NEW DNS ZONES
-    my @new_domain_zones = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZones', { "user" => $Cpanel::user, "old_domain" => $old_domain, "new_domain" => $new_domain});
-    my @new_old_domain_dns_zone = @new_domain_zones[0]->{data}->{zone}[0]->{record};
-    my @new_new_domain_dns_zone = @new_domain_zones[1]->{data}->{zone}[0]->{record};
+ #Slash_And_Or_Dashes99
 
-    # GET SUBDOMAINS
-    my $listallsubdomains = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetSubDomains', { "user" => $Cpanel::user });
+sub get_subdomains {
+    my $subdomains_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetSubDomains', { "user" => $Cpanel::user });
     my @subdomains;
-    for my $index (@{$listallsubdomains->{cpanelresult}->{data}}) {
+    for my $index (@{$subdomains_output->{"cpanelresult"}->{"data"}}) {
         while (my ($key, $value) = each %{$index}) {
             if ($key eq "subdomain") {
                 push(@subdomains, $value);
             }
         }
     }
+    return @subdomains;
+}
 
-    my $output_string = "";
-    #my $output_string = remove_dns_records($old_domain, \@subdomains, \@new_old_domain_dns_zone, 1);    
+sub delete_addon_domain {
+    my ( $domain ) = @_;
+    my %output;
+    my $primary_domain = %Cpanel::CPDATA{DNS};
 
-    # OLD
+    my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+    {
+        'domain'    => $domain,
+        'return_https_redirect_status' => '0',
+    })->{'data'};
 
-    # Remove all DNS Records for the old primary domain
+    my $servername = $domain_info->{'servername'};
+    $servername =~ s/.$primary_domain/_$primary_domain/g;
+
+    if ($domain_info->{'type'} eq 'addon_domain')
+    {
+        my $command = "cpapi2 AddonDomain deladdondomain domain=$domain subdomain=$servername";
+        my $command_output = `$command`;
+        
+        #$output{'status' => $command_output->{'status'}};
+        $output{'status'} = 1;
+        $output{'result'} = $command_output;
+    }
+    else
+    {
+        $Cpanel::CPERROR{'changeprimarydomain'} = "[$domain] is not an Addon Domain!";
+        $output{'status' => 0};
+        $output{'result'} = "[$domain] is not an Addon Domain!";
+    }
+    return \%output;
+}
+
+sub create_addon_domain {
+    my ($domain) = @_;
+    my $output;
+
+    my $subdomain = $domain;
+    $subdomain =~ s/\..*//;
+
+    my $command = "cpapi2 AddonDomain addaddondomain dir=public_html newdomain=$domain subdomain=$subdomain";
+    $output = `$command`;
+}
+
+sub fix_old_primary_domain_dns_zone {
+    my ($domain, $subdomains, $old_dns_zone, $new_dns_zone) = @_;
+
+    my @output;
+    my @subdomains = @{$subdomains};
+
+    my @old_dns_zone = @{$old_dns_zone};
+    my @new_dns_zone = @{$new_dns_zone};
+
+    my @records_to_exclude = ();
+
+    for my $old_dns_record (@{$old_dns_zone[0]}) {
+        for my $subdomain (@{$subdomains}) {
+            if (index($old_dns_record->{name}, $subdomain) != -1) {
+                push (@output, $old_dns_record->{name});
+                push (@output, $subdomain);
+                push (@records_to_exclude, $old_dns_record->{Line});
+                last;
+            }
+        }
+    }
+
     my @records_to_remove;
 
-    for my $new_dns_record (@{$new_old_domain_dns_zone[0]}) {
+    for my $new_dns_record (@{$new_dns_zone[0]}) {
         push (@records_to_remove, $new_dns_record->{Line});
     }
 
-    @records_to_remove = sort { $b <=> $a } @records_to_remove;
+    my @records_to_remove = sort { $b <=> $a } @records_to_remove;
 
-    for my $record (@records_to_remove) {
-        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminRemoveDNSRecord',
-        {
-            "user" => $Cpanel::user,
-            "domain" => $old_domain,
-            "line" => $record,
-        });
-        #$output_string = "$output_string $record";
-    }
-
-    for my $dns_record (@{$old_old_domain_dns_zone[0]}) {
-        # ADD DNS RECORD
-        my $boolean = 0;
-        $output_string = "$output_string $dns_record->{name} ======= ";
-        for my $subdomain (@subdomains) {
-            if (index($dns_record->{name}, $subdomain) != -1) {
-                $output_string = "$output_string 1";
-                $boolean = 1;
-                last;
-            }
-            $output_string = "$output_string 0";
-        }
-        if($boolean == 0) {
-            my $new_dns_record = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
-            {
-                "user" => $Cpanel::user,
-                "domain" => $old_domain,
-                "dns_record" => $dns_record,
-            });
-            $output_string = $output_string . "!!!ADDED!!! $dns_record->{name}";
-        }
-    }
-
-    # NEW
-    $output_string = $output_string . remove_dns_records($new_domain, \@subdomains, \@new_new_domain_dns_zone, 0);    
-    for my $dns_record (@{$old_new_domain_dns_zone[0]}) {
-        # ADD DNS RECORD
-        my $new_dns_record = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
-        {
-            "user" => $Cpanel::user,
-            "domain" => $new_domain,
-            "dns_record" => $dns_record,
-        });
-        #$output_string = "$output_string ADD $dns_record->{name} = $dns_record->{type} |";
-    }
-
-    my %returns = ();
-    $returns{"old_old_zone" => \@old_old_domain_dns_zone};
-    #$returns"old_new_zone" => $output_string};
-    #$returns{"new_old_zone" => $output_string};
-    #$returns{"new_new_zone" => $output_string};
-    $result->data(\%returns);
-
-    return 1;
-}
-    
-    #Slash_And_Or_Dashes99
-
-sub does_dns_record_exist {
-    my ($dns_record, $dns_zone) = @_;
-
-    my @dns_zone = @{$dns_zone};
- 
-    for my $new_dns_record (@{$dns_zone}) {
-        if ($new_dns_record->{type} ne $dns_record->{type}) {
-            next;
-        }
-        if ($new_dns_record->{name} ne $dns_record->{name}) {
-            next;
-        }
-        return $new_dns_record->{Line};
-    }
-
-    return 0;
-}
-
-sub remove_dns_records {
-    my ($domain, $subdomains, $dns_zone, $subdomain_switch) = @_;
-
-    my @subdomains = @{$subdomains};
-    my @dns_zone = @{$dns_zone};
-
-    my $output = "";
-    my @records_to_remove = ();
-
-    for my $new_dns_record (@{$dns_zone[0]}) {
-        my $boolean = 0;
-        for my $subdomain (@{$subdomains}) {
-            if (index($new_dns_record->{name}, $subdomain) != -1) {
-                #$output = "$output $new_dns_record->{type} |||";
-                $boolean = 1;
-                last;
-            }
-        }
-        if($boolean == $subdomain_switch) {
-            #$output = "$output $new_dns_record->{name} |";
-            push (@records_to_remove, $new_dns_record->{Line});
-        }
-    }
-
-    @records_to_remove = sort { $b <=> $a } @records_to_remove;
-
-    for my $record (@records_to_remove) {
+    # REMOVE ALL DNS RECORD FROM CURRENT ZONE
+    for my $line_number (@records_to_remove) {
         my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminRemoveDNSRecord',
         {
             "user" => $Cpanel::user,
             "domain" => $domain,
-            "line" => $record,
+            "line" => $line_number,
         });
-        #$output = "$output $result";
+
+        push (@output, $result);
     }
 
-    return $output;
+    # ADD BACK OLD DNS RECORD - SUBDOMAIN RECORDS
+    for my $dns_record (@{$old_dns_zone[0]}) {
+        if ( grep( /^$dns_record->{Line}$/, @records_to_exclude ) ) {
+            push (@output, "!");
+        }
+        else {
+            my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
+            {
+                "user" => $Cpanel::user,
+                "domain" => $domain,
+                "dns_record" => $dns_record,
+            });
+
+            push (@output, $result);
+        }
+    }
+
+    return @output;
 }
 
-sub import_dns_zone {
+sub fix_new_primary_domain_dns_zone {
+    my ($domain, $subdomains, $old_dns_zone, $new_dns_zone) = @_;
 
-    my ($domain, $subdomains, $old_dns_zone, $new_dns_zone, $subdomain_switch) = @_;
- 
-    my $output_string = "";
-
+    my @output;
     my @subdomains = @{$subdomains};
     my @old_dns_zone = @{$old_dns_zone};
     my @new_dns_zone = @{$new_dns_zone};
 
-    $output_string = remove_dns_records($domain, \@subdomains, \@new_dns_zone, $subdomain_switch);    
+    my @records_to_remove = ();
 
+    for my $new_dns_record (@{$new_dns_zone[0]}) {
+        if ($new_dns_record->{type} eq 'TXT') {
+            if ($new_dns_record->{name} eq $domain) {
+                if (grep ( /^$new_dns_record->{txtdata}$/, 'v=spf') ) {
+                    push (@records_to_remove, $new_dns_record->{Line});
+                    last;
+                }
+            }
+        }
+        my $boolean = 0;
+        for my $subdomain (@{$subdomains}) {
+            # If the record name contains a subdomain, don't delete it.
+            if (index($new_dns_record->{name}, $subdomain) != -1) {
+                $boolean = 1;
+                last;
+            }
+        }
+        if($boolean == 0) {
+            push (@records_to_remove, $new_dns_record->{Line});
+        }
+    }
+
+
+    # Sorts the array in reverse, so it deletes the last record first.
+    # If we don't, the line numbers will be incorrect.
+    @records_to_remove = sort { $b <=> $a } @records_to_remove;
+
+    for my $line_number (@records_to_remove) {
+        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminRemoveDNSRecord',
+        {
+            "user" => $Cpanel::user,
+            "domain" => $domain,
+            "line" => $line_number,
+        });
+
+        push (@output, $result);
+    }
 
     for my $dns_record (@{$old_dns_zone[0]}) {
-        # ADD DNS RECORD
-        my $new_dns_record = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
+        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
         {
             "user" => $Cpanel::user,
             "domain" => $domain,
             "dns_record" => $dns_record,
         });
-        $output_string = "$output_string ADD $dns_record->{name} = $dns_record->{type} |";
+
+        push (@output, $result);
     }
 
-    return $output_string;
-
+    return @output;
 }
 
-sub get_dns_zone() {
+sub reset_domains_and_dns {
     my ( $args, $result ) = @_;
 
-    my @wanted    = $args->get_multiple('name');
-    my $variables = {
-        %Cpanel::CPDATA,
-        %Cpanel::USERDATA,
-        cpanel_root_directory => $Cpanel::CONF{root},
-    };
+    my @addon_domains = ('sebode-222.hemsida.eu', 'sebode-333.hemsida.eu');
+    my $primary_domain = 'sebode-111.hemsida.eu';
 
+    # ARRAY FOR LOGGING OUTPUT
+    my @output;
 
-    my $old_domain = %Cpanel::CPDATA{DNS};
-    my $new_domain = @wanted[0];
-
-    my $old_domain_info = Cpanel::API::_execute('DomainInfo', 'single_domain_data', {
-        'domain'    => $old_domain,
-        'return_https_redirect_status' => '0',
-    })->{data};
-
-    my $new_domain_info = Cpanel::API::_execute('DomainInfo', 'single_domain_data', {
-        'domain'    => $new_domain,
-        'return_https_redirect_status' => '0',
-    })->{data};
-
-
-
+    push (@output, {"Output: change_primary_domain-1" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => "sebode-temp.hemsida.eu" })});
     
+    my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
 
+    push (@output, {'Output: list_domains' => $domain_info});
 
+    my @delete_addon_domains_output;
+    for my $domain (@{$domain_info}) {
+        my $result = delete_addon_domain($domain);
 
-    my $output_string = "";
-    my %output_hash;
-    my %old_old_dns_records;
-
-    # GET SUBDOMAINS
-    my $listallsubdomains = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetSubDomains', { "user" => $Cpanel::user });
-    my @subdomains;
-    for my $index (@{$listallsubdomains->{cpanelresult}->{data}}) {
-        while (my ($key, $value) = each %{$index}) {
-            if ($key eq "subdomain") {
-                push(@subdomains, $value);
-            }
-        }
+        push (@delete_addon_domains_output, $domain);
+        push (@delete_addon_domains_output, $result);
     }
+    push (@output, {'Output: delete_addon_domains' => \@delete_addon_domains_output});
 
+    my @create_addon_domains_output;
+    for my $domain (@addon_domains) {
+        my $result = create_addon_domain($domain);
 
-    # GET THE OLD DNS ZONES
-    my @old_domain_zones = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZones', { "user" => $Cpanel::user, "old_domain" => $old_domain, "new_domain" => $new_domain});
-    my @old_old_domain_dns_zone = @old_domain_zones[0]->{data}->{zone}[0]->{record};
-    my @old_new_domain_dns_zone = @old_domain_zones[1]->{data}->{zone}[0]->{record};
+        push (@create_addon_domains_output, $result);
+    }
+    push (@output, {'Output: create_addon_domains' => \@create_addon_domains_output});
 
-    # GET THE NEW DNS ZONES
-    my @new_domain_zones = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZones', { "user" => $Cpanel::user, "old_domain" => $old_domain, "new_domain" => $new_domain});
-    my @new_old_domain_dns_zone = @new_domain_zones[0]->{data}->{zone}[0]->{record};
-    my @new_new_domain_dns_zone = @new_domain_zones[1]->{data}->{zone}[0]->{record};
+    push (@output, {"Output: change_primary_domain-2" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $primary_domain })});
 
-    # IMPORT DNS-RECORDS
-    $output_string = $output_string . import_dns_zone($old_domain, \@subdomains, \@old_old_domain_dns_zone, \@new_old_domain_dns_zone);
-    $output_string = $output_string . import_dns_zone($new_domain, \@subdomains, \@old_new_domain_dns_zone, \@new_new_domain_dns_zone);
-    
-    #Slash_And_Or_Dashes99
-
-    $result->data({"output_string" => $output_string, "output_hash" => \%output_hash, "output_subdomain" => \@subdomains, "old_new" => scalar @old_old_domain_dns_zone, "new_new" => scalar @new_old_domain_dns_zone});
-
+    $result->data(\@output);
     return 1;
 }
-    #Slash_And_Or_Dashes99
 
 1;

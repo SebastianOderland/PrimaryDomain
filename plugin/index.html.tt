@@ -140,6 +140,16 @@
             </div>
             <br>
             <br>
+            <div class="section" id="reset-section">
+                <h2>[% locale.maketext("RESET DOMAINS AND DNS") %]</h2>
+                <form id="reset_form" method="post" action="reset.html" name="reset_form">
+                    <div class="form-group">
+                        <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Reset") %]" />
+                    </div>
+                </form>       
+            </div>
+            <br>
+            <br>
             <div class="section" id="info-section">
             </div>
             
