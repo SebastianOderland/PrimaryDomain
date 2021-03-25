@@ -18,11 +18,26 @@ sub change_primary_domain() {
     my $old_domain = %Cpanel::CPDATA{DNS};
     my $new_domain = $args->get('new_domain');
     
-    push (@output, {"Output: old_domain" => $old_domain});
-    push (@output, {"Output: new_domain" => $new_domain});
+    push (@output, {'Output: old_domain' => $old_domain});
+    push (@output, {'Output: new_domain' => $new_domain});
 
     if ($old_domain eq $new_domain) {
-        $Cpanel::CPERROR{'changeprimarydomain'} = "Old and new primary domain are the same!";
+        $Cpanel::CPERROR{'changeprimarydomain'} = 'Old and new primary domain are the same!';
+        return;
+    }
+
+    my $old_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+    {
+        'domain'    => $old_domain,
+    })->{'data'};
+
+    my $new_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+    {
+        'domain'    => $new_domain,
+    })->{'data'};
+
+    if ($old_domain_info->{'documentroot'} ne $new_domain_info->{'documentroot'}) {
+        $Cpanel::CPERROR{'changeprimarydomain'} = 'The current Addon Domain and the current Primary Domain needs to have the same Documentroot!';
         return;
     }
 
@@ -93,7 +108,6 @@ sub delete_addon_domain {
     my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
     {
         'domain'    => $domain,
-        'return_https_redirect_status' => '0',
     })->{'data'};
 
     my $servername = $domain_info->{'servername'};
