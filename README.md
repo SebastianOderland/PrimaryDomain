@@ -25,7 +25,7 @@ Done!
 ## TODO
 
 - Allow current addon domain to have subdomains
-- Remove all subdomains for current Addon Domain
+X Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
 - Convert as much as possible to UAPI

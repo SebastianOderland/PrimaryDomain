@@ -224,6 +224,7 @@ sub fix_old_primary_domain_dns_zone {
 
 sub fix_new_primary_domain_dns_zone {
     my ($domain, $subdomains, $old_dns_zone, $new_dns_zone) = @_;
+    # REMOVE ALL DNS RECORDS
 
     my @output;
     my @subdomains = @{$subdomains};
@@ -234,19 +235,16 @@ sub fix_new_primary_domain_dns_zone {
     my @records_to_keep = ();
 
     for my $new_dns_record (@{$new_dns_zone[0]}) {
-        if ($new_dns_record->{type} eq 'TXT' && $new_dns_record->{'name'} eq $domain && index($new_dns_record->{'txtdata'}, 'v=spf') != -1) {
-            push (@records_to_remove, $new_dns_record->{'Line'});
-        }
-        my $boolean = 0;
+        push (@records_to_remove, $new_dns_record->{'Line'});
         for my $subdomain (@{$subdomains}) {
             # If the record name contains a subdomain, don't delete it.
-            if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1 && index($domain, $subdomain->{'subdomain'}) == -1) {
+            if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
                 push (@records_to_keep, $new_dns_record);
-                $boolean = 1;
                 last;
             }
         }
-        push (@records_to_remove, $new_dns_record->{'Line'});
+            #push (@records_to_remove, $new_dns_record->{'Line'});
+        }
     }
 
 
@@ -266,6 +264,10 @@ sub fix_new_primary_domain_dns_zone {
     }
 
     for my $dns_record (@{$old_dns_zone[0]}) {
+        for my $subdomain (@{$subdomains}) {
+        if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
+
+        }
         my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
         {
             "user" => $Cpanel::user,
