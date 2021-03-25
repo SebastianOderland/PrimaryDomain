@@ -9,14 +9,14 @@
 
 ## Notes
 
-- E-Mail
+- E-Mail<br>
 E-mailaccounts does not seem to update after changing primary domain.
 So it seems to be working for now.
 
-- DNS
+- DNS<br>
 Almost done.
 
-- Documentroot
+- Documentroot<br>
 Incomplete.
 
 ## TODO
