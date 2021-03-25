@@ -51,16 +51,20 @@ sub change_primary_domain() {
     my @old_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
 
 
+    # DELETE ALL SUBDOMAINS ON THE ADDON DOMAIN
+    push (@output, {"Output: delete_subdomains" => delete_subdomains($new_domain, \@subdomains)});
+
+
     # DELETE CURRENT ADDON DOMAIN
-    push (@output, {"Output: delete_addon_domain" => delete_addon_domain($new_domain)});
+    #push (@output, {"Output: delete_addon_domain" => delete_addon_domain($new_domain)});
 
 
     # CHANGE PRIMARY DOMAIN
-    push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $new_domain })});
+    #push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $new_domain })});
 
 
     # CREATE NEW ADDON DOMAIN
-    push (@output, {"Output: create_addon_domain" => create_addon_domain($old_domain)});
+    #push (@output, {"Output: create_addon_domain" => create_addon_domain($old_domain)});
 
 
     # STORE NEW DNS ZONES
@@ -74,11 +78,11 @@ sub change_primary_domain() {
 
 
     # IMPORT OLD DNS RECORDS TO NEW DNS ZONE
-    my @fix_old_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
-    push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_output});
+    #my @fix_old_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
+    #push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_output});
 
-    my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
-    push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
+    #my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
+    #push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
 
 
     $result->data(\@output);
@@ -98,6 +102,33 @@ sub get_subdomains {
         }
     }
     return @subdomains;
+}
+
+sub delete_subdomains {
+    my ( $domain, $subdomains ) = @_;
+    my %output;
+    my $primary_domain = %Cpanel::CPDATA{DNS};
+
+    my @subdomains = @{$subdomains};
+
+    my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+    {
+        'domain'    => $domain,
+    })->{'data'};
+
+    my $servername = $domain_info->{'servername'};
+    $servername =~ s/.$primary_domain/_$primary_domain/g;
+
+    for my $subdomain (@subdomains) {
+        if (index($subdomain, $domain) != -1)) {
+            my $command = "cpapi2 SubDomain delsubdomain domain=$domain";
+            my $command_output = `$command`;
+
+            $output{'status'} = 1;
+            $output{'result'} = $command_output;
+        }
+    }
+    return \%output;
 }
 
 sub delete_addon_domain {
