@@ -203,8 +203,11 @@ sub fix_new_primary_domain_dns_zone {
     for my $new_dns_record (@{$new_dns_zone[0]}) {
         if ($new_dns_record->{type} eq 'TXT') {
             if ($new_dns_record->{name} eq $domain) {
-                if (grep ( /^$new_dns_record->{txtdata}$/, 'v=spf') ) {
+                if (index($new_dns_record->{txtdata}, 'v=spf') != -1) {
                     push (@records_to_remove, $new_dns_record->{Line});
+
+                }
+                if (grep ( /^$new_dns_record->{txtdata}$/, 'v=spf') ) {
                     last;
                 }
             }
