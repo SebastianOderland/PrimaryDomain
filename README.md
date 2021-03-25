@@ -10,7 +10,7 @@
 ## Notes
 
 - E-Mail<br>
-E-mailaccounts does not seem to update after changing primary domain.
+E-mailaccounts does not seem to update after changing primary domain.<br>
 So it "seems" to be done.
 
 - DNS<br>
@@ -21,7 +21,6 @@ Done!
 
 ## TODO
 
-- The Addon Domain needs to have public_html as document root before changing it to Primary Domain.
 - Allow current addon domain to have subdomains
 - Probably redo the process of importing DNS-Records
   
