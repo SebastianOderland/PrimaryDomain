@@ -25,6 +25,9 @@ Done!
 ## TODO
 
 - Allow current addon domain to have subdomains
+- Remove all subdomains for current Addon Domain.
+- Recreate them after changing Primary Domain.
+
 - The process takes quite a while, so a loading screen is kinda necessary.
 - Probably redo the process of importing DNS-Records
   
