@@ -20,7 +20,6 @@ So it seems to be working for now.
 ## TODO
 
 - The Addon Domain needs to have public_html as document root before changing it to Primary Domain.
-- If the Addon Domain has Subdomains, the DNS-Records for that Subdomain gets created twice.
 - Allow current addon domain to have subdomains
 - Probably redo the process of importing DNS-Records
   
