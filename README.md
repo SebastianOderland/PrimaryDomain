@@ -25,6 +25,7 @@ Done!
 ## TODO
 
 - Allow current addon domain to have subdomains
+- The process takes quite a while, so a loading screen is kinda necessary.
 - Probably redo the process of importing DNS-Records
   
 - Either check all the "potential" outcome before executing anything, or store a backup of the data
