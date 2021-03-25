@@ -209,7 +209,7 @@ sub fix_new_primary_domain_dns_zone {
         for my $subdomain (@{$subdomains}) {
             # If the record name contains a subdomain, don't delete it.
             if (index($new_dns_record->{name}, $subdomain) != -1) {
-                push (@records_to_keep, $new_dns_record->{Line});
+                push (@records_to_keep, $new_dns_record);
                 $boolean = 1;
                 last;
             }
@@ -233,7 +233,7 @@ sub fix_new_primary_domain_dns_zone {
         push (@output, $result);
     }
 
-    for my $dns_record (@records_to_keep) {
+    for my $dns_record (@{$old_dns_zone[0]}) {
         my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
         {
             "user" => $Cpanel::user,
@@ -244,7 +244,7 @@ sub fix_new_primary_domain_dns_zone {
         push (@output, $result);
     }
 
-    for my $dns_record (@{$old_dns_zone[0]}) {
+    for my $dns_record (@records_to_keep) {
         my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
         {
             "user" => $Cpanel::user,

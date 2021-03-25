@@ -1,9 +1,18 @@
+<h2 id="order-of-execution">Order of Execution</h2>
+<ol type="1">
+<li>Get the current Subdomains and DNS Zones</li>
+<li>Delete current Addon Domain</li>
+<li>Change Primary Domain</li>
+<li>Create new Addon Domain</li>
+<li>Get the new Subdomains and DNS Zones</li>
+<li>Import old DNS Records into new DNS Zones</li>
+</ol>
 <h2 id="todo">TODO</h2>
 <ul>
-<li>Fix order of DNS-Records.</li>
+<li>Redo DNS.</li>
 <li>Fix E-mailaccounts.</li>
 <li>Increase Serial Number ?</li>
-<li><p>Allow current addon domain to have subdomains ?</p></li>
+<li><p>Allow current addon domain to have subdomains.</p></li>
 <li>Either check all the “potential” outcome before executing anything, or store a backup of the data.</li>
 <li><p>Update primary domain in WHMCS.</p></li>
 </ul>
