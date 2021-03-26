@@ -11,13 +11,18 @@ use feature qw/switch/;
 use List::Util qw(any);
 
 sub plugin_info {
-    my %output;
+    my ( $args, $result ) = @_;
+    my @output;
+    local $Data::Dumper::Terse = 1;
 
-    $output{'current_primary_domain'} = %Cpanel::CPDATA{DNS};
+    my $primary_domain = %Cpanel::CPDATA{'DNS'};
+    push (@output, {'primary_domain' => $primary_domain});
+    my $addon_domains = Dumper(Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'});
+    push (@output, {'addon_domains' => $addon_domains});
     #my $param = join(q{, }, map{qq{$_ => $hash{$_}}} keys %hash);
-    $output{'addon_domains'} = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
-
-    return \%output;
+ 
+    $result->data(\@output);
+    return 1;
 }
 
 sub change_primary_domain {

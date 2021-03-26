@@ -9,7 +9,7 @@
         'name' => 'domain',
     }).data.domain;
 
-    SET plugin_info = execute("PrimaryDomain", "plugin_info").data;
+    SET plugin_info = execute("PrimaryDomain", "plugin_info", {'test1' => 'test2'});
 
     SET domains_resp = execute("DomainInfo", "list_domains");
 
@@ -149,14 +149,19 @@
             </div>
             <br>
             <br>
-            <div class="section" id="info-section">
+            <div class="section" id="plugin-info-section">
                 <h2>[% locale.maketext("INFO") %]</h2>
-                [% FOREACH key IN plugin_info.keys %]
-                    <h6><b>[% key %]</b></h6> <p>[% plugin_info.$key %]</p>
-                [% END %]    
+                [% FOREACH output_item IN plugin_info.data %]
+                    [% FOREACH key IN output_item.keys %]
+                        <p><b>[% key %] = </b>[% output_item.$key %]</p>
+                    [% END %]
+                [% END %]
+                [% IF plugin_info.errors %]
+                    [% Dumper.dump(plugin_info.errors) %]
+                [% END %]
             </div>
             <br>
-            <br> 
+            <br>
             <div class="section" id="info-section">
             </div>
             

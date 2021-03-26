@@ -9,18 +9,18 @@
 
 ## Notes
 
-- E-Mail<br>
-~~E-mailaccounts does not seem to update after changing primary domain.~~<br>
-Nevermind, it updates sometimes.
-
-- Subdomains<br>
-Incomplete.
+- Documentroot<br>
+Done!
 
 - DNS<br>
 Maybe done?
 
-- Documentroot<br>
-Done!
+- Subdomains<br>
+Incomplete.
+
+- E-Mail<br>
+~~E-mailaccounts does not seem to update after changing primary domain.~~<br>
+Nevermind, it updates sometimes.
 
 ## TODO
 
