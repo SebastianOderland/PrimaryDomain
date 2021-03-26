@@ -60,8 +60,13 @@
             <br>
             <br>
             <div class="alert-message">
-                [% FOREACH res IN result.data.output %]
-                <p>[% res %] = [% result.data.output.res %]</p>
+                [% FOREACH res IN result.data.old_old_zone.keys %]
+                <p>[% res %] = [% result.data.old_old_zone.$res %]</p>
+                [% END %]
+            </div>
+            <div class="alert-message">
+                [% FOREACH res IN result.data.old_old_zone %]
+                <p>[% res %]</p>
                 [% END %]
             </div>
         </div>

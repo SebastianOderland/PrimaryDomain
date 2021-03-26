@@ -44,6 +44,21 @@
             [% END %]
             <br>
             <br>
+            [% Dumper.dump(result.data.output_hash) %]
+            <br>
+            <br>
+            [% Dumper.dump(result.data.output_string) %]
+            <br>
+            <br>
+            [% Dumper.dump(result.data.returns) %]
+            <br>
+            <br>
+            [% Dumper.dump(result.data) %]
+            <br>
+            <br>
+            [% Dumper.dump(result) %]
+            <br>
+            <br>
             [% Dumper.dump(result) %]
             <div class="alert-message">
                 [% FOREACH res IN result.data %]
