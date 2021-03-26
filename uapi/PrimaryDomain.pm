@@ -312,10 +312,13 @@ sub reset_domains_and_dns {
     my $primary_domain = 'sebode-111.hemsida.eu';
 
     my @output;
+    
+    push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user, "new_domain" => $primary_domain })});
 
-    my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
+    my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'};
     push (@output, {'Output: list_domains' => $domain_info});
 
+    # RESET DNS ZONE
     my @reset_zone_output;
     my $result_main_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
         { 
@@ -324,6 +327,20 @@ sub reset_domains_and_dns {
         });
     push (@reset_zone_output, $domain_info->{'main_domain'});
     push (@reset_zone_output, $result_main_domain);
+
+    for my $domain (@{$domain_info->{'addon_domains'}}) {
+        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
+            { 
+                "user" => $Cpanel::user,
+                "domain" => $domain
+            });
+
+        push (@reset_zone_output, $domain);
+        push (@reset_zone_output, $result);
+    }
+
+    push (@output, {'Output: reset_zones' => \@reset_zone_output});
+
 
     $result->data(\@output);
     return 1;

@@ -235,7 +235,9 @@ sub AdminResetDNSZone {
     my $user = $self->{_args}{user};
     my $domain = $self->{_args}{domain};
 
-    my $output = $cp->whm_api('resetdnszone', { 'domain' => $domain });
+    #my $command = "whmapi1 resetdnszone domain=" . $domain;
+    #my $output = `$command`;
+    my $output = $cp->whm_api('resetzone', { 'domain' => $domain });
 
     return $output;
 }

@@ -4,21 +4,21 @@
 Done!
 
 - DNS\
-Maybe done?
+Close to being done
 
 - Subdomains\
-Incomplete.
+Incomplete
 
 - E-Mail\
-~~E-mailaccounts does not seem to update after changing primary domain.~~\
-Nevermind, it updates sometimes.
+~~E-mailaccounts does not seem to update after changing primary domain~~\
+Nevermind, it updates sometimes
 
 &nbsp;
 &nbsp;
 
 ## Todo
 
-- Reset DNS Zones
+- Remove TXT Duplication
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
