@@ -311,31 +311,10 @@ sub reset_domains_and_dns {
     my @addon_domains = ('sebode-222.hemsida.eu', 'sebode-333.hemsida.eu');
     my $primary_domain = 'sebode-111.hemsida.eu';
 
-    # ARRAY FOR LOGGING OUTPUT
     my @output;
 
-    #push (@output, {"Output: change_primary_domain-1" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => "sebode-temp.hemsida.eu" })});
-    
     my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
-
     push (@output, {'Output: list_domains' => $domain_info});
-
-    my @delete_addon_domains_output;
-    for my $domain (@{$domain_info}) {
-        my $result = delete_addon_domain($domain);
-
-        push (@delete_addon_domains_output, $domain);
-        push (@delete_addon_domains_output, $result);
-    }
-    push (@output, {'Output: delete_addon_domains' => \@delete_addon_domains_output});
-
-    my @create_addon_domains_output;
-    for my $domain (@addon_domains) {
-        my $result = create_addon_domain($domain);
-
-        push (@create_addon_domains_output, $result);
-    }
-    push (@output, {'Output: create_addon_domains' => \@create_addon_domains_output});
 
     my @reset_zone_output;
     my $result_main_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
@@ -345,19 +324,6 @@ sub reset_domains_and_dns {
         });
     push (@reset_zone_output, $domain_info->{'main_domain'});
     push (@reset_zone_output, $result_main_domain);
-    for my $domain (@{$domain_info->{'addon_domains'}}) {
-        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
-            { 
-                "user" => $Cpanel::user,
-                "domain" => $domain
-            });
-
-        push (@reset_zone_output, $domain);
-        push (@reset_zone_output, $result);
-    }
-    push (@output, {'Output: delete_addon_domains' => \@reset_zone_output});
-
-    push (@output, {"Output: change_primary_domain-2" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $primary_domain })});
 
     $result->data(\@output);
     return 1;

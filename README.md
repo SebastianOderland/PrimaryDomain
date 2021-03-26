@@ -18,6 +18,7 @@ Nevermind, it updates sometimes.
 
 ## Todo
 
+- Reset DNS Zones
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
