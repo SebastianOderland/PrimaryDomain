@@ -2,6 +2,7 @@ package Cpanel::API::PrimaryDomain;
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 use Cpanel::AdminBin::Call;
 use Cpanel::Api2::Exec;
@@ -9,7 +10,17 @@ use Whostmgr::API::1::DNS();
 use feature qw/switch/;
 use List::Util qw(any);
 
-sub change_primary_domain() {
+sub plugin_info {
+    my %output;
+
+    $output{'current_primary_domain'} = %Cpanel::CPDATA{DNS};
+    #my $param = join(q{, }, map{qq{$_ => $hash{$_}}} keys %hash);
+    $output{'addon_domains'} = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
+
+    return \%output;
+}
+
+sub change_primary_domain {
     my ( $args, $result ) = @_;
 
     # ARRAY FOR LOGGING OUTPUT

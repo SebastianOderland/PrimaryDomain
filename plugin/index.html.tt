@@ -9,7 +9,7 @@
         'name' => 'domain',
     }).data.domain;
 
-    SET get_info = execute("PrimaryDomain", "get_info").data;
+    SET plugin_info = execute("PrimaryDomain", "plugin_info").data;
 
     SET domains_resp = execute("DomainInfo", "list_domains");
 
@@ -149,6 +149,14 @@
             </div>
             <br>
             <br>
+            <div class="section" id="info-section">
+                <h2>[% locale.maketext("INFO") %]</h2>
+                [% FOREACH key IN plugin_info.keys %]
+                    <h6><b>[% key %]</b></h6> <p>[% plugin_info.$key %]</p>
+                [% END %]    
+            </div>
+            <br>
+            <br> 
             <div class="section" id="info-section">
             </div>
             
