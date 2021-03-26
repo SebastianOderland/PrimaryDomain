@@ -13,7 +13,10 @@ Incomplete.
 ~~E-mailaccounts does not seem to update after changing primary domain.~~\
 Nevermind, it updates sometimes.
 
-## TODO
+&nbsp;
+&nbsp;
+
+## Todo
 
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
@@ -24,7 +27,10 @@ Nevermind, it updates sometimes.
 - Probably redo the process of importing DNS-Records
 - Either check all the "potential" outcome before executing anything, or store a backup of the data
 - Update primary domain in WHMCS
-  
+
+&nbsp;
+&nbsp;
+
 ## Order of Execution
 
 1. Get the current Subdomains and DNS Zones
