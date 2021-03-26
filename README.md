@@ -1,7 +1,8 @@
 ## Notes
 
 - Documentroot\
-Done!
+Done for primary domain and addon domain.
+Subdomains are not working.
 
 - DNS\
 Done for now!
