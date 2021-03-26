@@ -8,11 +8,12 @@ Subdomains are not working.
 Done for now!
 
 - Subdomains\
-Incomplete
+New Primary Domain Completed!
+Old Primary Domain Incomplete.
 
 - E-Mail\
 ~~E-mailaccounts does not seem to update after changing primary domain~~\
-Nevermind, it updates sometimes
+Nevermind, it updates sometimes.
 
 &nbsp;
 &nbsp;
@@ -20,9 +21,9 @@ Nevermind, it updates sometimes
 ## Todo
 
 - DONE! Remove all subdomains for current Addon Domain
-- Remove all DNS-records for subdomains
-- Recreate the subdomains
-  
+- DONE! Remove all DNS-records for subdomains
+- DONE! Recreate the subdomains
+
 - Convert as much as possible to UAPI
 - The process takes quite a while, so a loading screen is kinda necessary
 - Probably redo the process of importing DNS-Records
