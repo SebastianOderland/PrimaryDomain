@@ -18,8 +18,6 @@ Nevermind, it updates sometimes
 
 ## Todo
 
-- New Primary Domain "gets saved" DNS-records from previous Primary Domain
-- New Primary Domains A-Records gets duplicated
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
