@@ -10,8 +10,8 @@
 ## Notes
 
 - E-Mail<br>
-E-mailaccounts does not seem to update after changing primary domain.<br>
-So it "seems" to be done.
+~~E-mailaccounts does not seem to update after changing primary domain.~~<br>
+Nevermind, it updates sometimes.
 
 - Subdomains<br>
 Incomplete.

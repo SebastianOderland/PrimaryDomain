@@ -23,6 +23,7 @@ use constant _actions =>
     'AdminAddDNSRecord',
     'AdminEditDNSRecord',
     'AdminRemoveDNSRecord',
+    'AdminResetDNSZone',
 );
 
 sub AdminChangePrimaryDomain {
@@ -224,4 +225,18 @@ sub AdminEditDNSRecord {
     return $edit_dns_record_output;
 }
 
+sub AdminResetDNSZone {
+    my $class = shift;
+
+    my $self = {
+        _args => shift,
+    };
+
+    my $user = $self->{_args}{user};
+    my $domain = $self->{_args}{domain};
+
+    my $output = $cp->whm_api('resetdnszone', { 'domain' => $domain });
+
+    return $output;
+}
 1;

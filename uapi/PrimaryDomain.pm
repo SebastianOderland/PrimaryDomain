@@ -243,8 +243,6 @@ sub fix_new_primary_domain_dns_zone {
                 last;
             }
         }
-            #push (@records_to_remove, $new_dns_record->{'Line'});
-        }
     }
 
 
@@ -264,18 +262,17 @@ sub fix_new_primary_domain_dns_zone {
     }
 
     for my $dns_record (@{$old_dns_zone[0]}) {
-        for my $subdomain (@{$subdomains}) {
-        if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
+        #for my $subdomain (@{$subdomains}) {
+        #if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
+        #}
+        #my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
+        #{
+        #    "user" => $Cpanel::user,
+        #    "domain" => $domain,
+        #    "dns_record" => $dns_record,
+        #});
 
-        }
-        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
-        {
-            "user" => $Cpanel::user,
-            "domain" => $domain,
-            "dns_record" => $dns_record,
-        });
-
-        push (@output, $result);
+        #push (@output, $result);
     }
 
     for my $dns_record (@records_to_keep) {
@@ -301,7 +298,7 @@ sub reset_domains_and_dns {
     # ARRAY FOR LOGGING OUTPUT
     my @output;
 
-    push (@output, {"Output: change_primary_domain-1" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => "sebode-temp.hemsida.eu" })});
+    #push (@output, {"Output: change_primary_domain-1" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => "sebode-temp.hemsida.eu" })});
     
     my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
 
@@ -323,6 +320,26 @@ sub reset_domains_and_dns {
         push (@create_addon_domains_output, $result);
     }
     push (@output, {'Output: create_addon_domains' => \@create_addon_domains_output});
+
+    my @reset_zone_output;
+    my $result_main_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
+        { 
+            "user" => $Cpanel::user,
+            "domain" => $domain_info->{'main_domain'}
+        });
+    push (@reset_zone_output, $domain_info->{'main_domain'});
+    push (@reset_zone_output, $result_main_domain);
+    for my $domain (@{$domain_info->{'addon_domains'}}) {
+        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminResetDNSZone',
+            { 
+                "user" => $Cpanel::user,
+                "domain" => $domain
+            });
+
+        push (@reset_zone_output, $domain);
+        push (@reset_zone_output, $result);
+    }
+    push (@output, {'Output: delete_addon_domains' => \@reset_zone_output});
 
     push (@output, {"Output: change_primary_domain-2" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $primary_domain })});
 
