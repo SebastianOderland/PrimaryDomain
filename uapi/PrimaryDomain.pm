@@ -241,6 +241,8 @@ sub fix_old_primary_domain_dns_zone {
 sub fix_new_primary_domain_dns_zone {
     my ($domain, $subdomains, $old_dns_zone, $new_dns_zone) = @_;
     # REMOVE ALL DNS RECORDS
+    # ADD OLD DNS RECORDS BACK
+    # ADD RECORDS BACK FROM THE NEW DNS ZONE THAT WE WANT TO KEEP
 
     my @output;
     my @subdomains = @{$subdomains};
@@ -252,11 +254,13 @@ sub fix_new_primary_domain_dns_zone {
 
     for my $new_dns_record (@{$new_dns_zone[0]}) {
         push (@records_to_remove, $new_dns_record->{'Line'});
-        for my $subdomain (@{$subdomains}) {
-            # If the record name contains a subdomain, don't delete it.
-            if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
-                push (@records_to_keep, $new_dns_record);
-                last;
+        if ($new_dns_record->{'type'} eq 'A' || $new_dns_record->{'type'} eq 'AAAA') {
+            for my $subdomain (@{$subdomains}) {
+                # If the record name contains a subdomain, don't delete it.
+                if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
+                    push (@records_to_keep, $new_dns_record);
+                    last;
+                }
             }
         }
     }
@@ -281,14 +285,14 @@ sub fix_new_primary_domain_dns_zone {
         #for my $subdomain (@{$subdomains}) {
         #if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
         #}
-        #my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
-        #{
-        #    "user" => $Cpanel::user,
-        #    "domain" => $domain,
-        #    "dns_record" => $dns_record,
-        #});
+        my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
+            {
+            "user" => $Cpanel::user,
+            "domain" => $domain,
+            "dns_record" => $dns_record,
+        });
 
-        #push (@output, $result);
+        push (@output, $result);
     }
 
     for my $dns_record (@records_to_keep) {
@@ -312,7 +316,7 @@ sub reset_domains_and_dns {
     my $primary_domain = 'sebode-111.hemsida.eu';
 
     my @output;
-    
+
     push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user, "new_domain" => $primary_domain })});
 
     my $domain_info = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'};
