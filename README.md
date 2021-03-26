@@ -24,7 +24,6 @@ Done!
 
 ## TODO
 
-- Allow current addon domain to have subdomains
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
