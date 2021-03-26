@@ -4,7 +4,7 @@
 Done!
 
 - DNS\
-Close to being done
+Done for now!
 
 - Subdomains\
 Incomplete
@@ -18,7 +18,8 @@ Nevermind, it updates sometimes
 
 ## Todo
 
-- Remove TXT Duplication
+- New Primary Domain "gets saved" DNS-records from previous Primary Domain
+- New Primary Domains A-Records gets duplicated
 - DONE! Remove all subdomains for current Addon Domain
 - Remove all DNS-records for subdomains
 - Recreate the subdomains
