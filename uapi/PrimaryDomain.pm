@@ -93,7 +93,6 @@ sub change_primary_domain {
     # STORE NEW SUBDOMAINS
     my @new_subdomains = get_subdomains();
     push (@output, {"Output: get_new_subdomains" => \@new_subdomains});
-    my @subdomains = (@old_subdomains, @new_subdomains);
 
 
     # IMPORT OLD DNS RECORDS TO NEW DNS ZONE
@@ -256,6 +255,9 @@ sub fix_old_primary_domain_dns_zone {
 
     my @records_to_exclude = ();
 
+    # CHECK IF SUBDOMAIN IS A "STANDARD" SUBDOMAIN, OR AN ADDED/CUSTOM SUBDOMAIN
+    # ONLY KEEP ADDED/CUSTOM SUBDOMAINS IN THE LOOP BELOW
+
     for my $old_dns_record (@{$old_dns_zone[0]}) {
         for my $subdomain (@{$subdomains}) {
             if (index($old_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
@@ -323,6 +325,28 @@ sub fix_new_primary_domain_dns_zone {
     my @records_to_remove = ();
     my @records_to_keep = ();
 
+    # CHECK IF SUBDOMAIN IS A "STANDARD" SUBDOMAIN, OR AN ADDED/CUSTOM SUBDOMAIN
+    # ONLY KEEP "STANDARD" SUBDOMAINS IN THE LOOP BELOW
+
+    # GET ALL ADDON DOMAINS
+    # GET THE SUBDOMAIN FOR THE ADDON DOMAINS
+
+    my @servername_for_all_addon_domains;
+
+    my $addon_domains = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
+    for my $domain (@{$addon_domains}) {
+        my $servername = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+            {
+                'domain'    => $old_domain,
+            })->{'data'}->{'servername'};
+
+        $servername =~ s/[.]$domain//;
+
+        push(@servername_for_all_addon_domains, '-------------------');
+        push(@servername_for_all_addon_domains, $servername);
+    }
+    push (@output, \@servername_for_all_addon_domains);
+
     push (@output, \@subdomains_for_this_addon_domain);
 
     for my $new_dns_record (@{$new_dns_zone[0]}) {
@@ -332,6 +356,7 @@ sub fix_new_primary_domain_dns_zone {
 
         if ($new_dns_record->{'type'} eq 'A' || $new_dns_record->{'type'} eq 'AAAA') {
             for my $subdomain (@{$subdomains}) {
+                if
                 # If the record name contains a subdomain, don't delete it.
                 if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
                     if (($temp_subdomain ~~ @service_subdomains) == 0) {
