@@ -68,8 +68,9 @@ sub change_primary_domain {
 
 
     # DELETE ALL SUBDOMAINS ON THE ADDON DOMAIN
-    my $res = delete_subdomains($new_domain, \@old_subdomains);
-    my @subdomains_for_this_addon_domain = $res->{'data'};
+    my $res = delete_subdomains($old_domain, $new_domain, \@old_subdomains);
+    my @subdomains_for_old_domain = $res->{'old_domain'};
+    my @subdomains_for_new_domain = $res->{'data'};
     push (@output, {"Output: delete_subdomains" => $res});
 
 
@@ -103,14 +104,12 @@ sub change_primary_domain {
     push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
 
     # RECREATE SUBDOMAINS
-    my $res1 = create_subdomains($new_domain, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain);
-    push (@output, {"Output: create_subdomains" => $res1});
+    push (@output, {"Output: create_subdomains_for_old_domain" => create_subdomains($old_domain, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain)});
+    push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain)});
 
     $result->data(\@output);
     return 1;
 }
-
-#Slash_And_Or_Dashes99
 
 sub get_subdomains {
     my $subdomains_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetSubDomains', { "user" => $Cpanel::user });
@@ -122,18 +121,25 @@ sub get_subdomains {
 }
 
 sub delete_subdomains {
-    my ( $domain, $subdomains ) = @_;
+    my ( $old_domain, $new_domain, $subdomains ) = @_;
     my @subdomains = @{$subdomains};
 
     my %output;
 
     my @data;
+    my @old_domain_subdomains;
+    my @new_domain_subdomains;
     for my $subdomain (@{$subdomains}) { 
-        if (index ($subdomain->{'domain'}, $domain) != -1) {
+        if (index ($subdomain->{'domain'}, $new_domain) != -1) {
             my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
             my $command_output = `$command`;
             #push (@output, {'result' => $command_output});
             $output{'result'} = $command_output;
+            if($subdomain->{'rootdomain'} eq $domain) {
+
+            }
+            push (@old_domain_subdomains, $subdomain->{'subdomain'});
+            push (@old_domain_subdomains, $subdomain->{'subdomain'});
             push (@data, $subdomain->{'subdomain'});
         }
     }
@@ -150,6 +156,7 @@ sub create_subdomains {
     my %output;
     
     my @data;
+    push(@data, $domain);
     for my $subdomain (@{$subdomains[0]}) { 
         my $command = "cpapi2 SubDomain addsubdomain domain=$subdomain rootdomain=$domain";
         my $command_output = `$command`;
@@ -334,15 +341,14 @@ sub fix_new_primary_domain_dns_zone {
     my @servername_for_all_addon_domains;
 
     my $addon_domains = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
-    for my $domain (@{$addon_domains}) {
+    for my $addon_domain (@{$addon_domains}) {
         my $servername = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
             {
-                'domain'    => $old_domain,
+                'domain'    => $addon_domain,
             })->{'data'}->{'servername'};
 
-        $servername =~ s/[.]$domain//;
+        $servername =~ s/[.]\Q$domain//;
 
-        push(@servername_for_all_addon_domains, '-------------------');
         push(@servername_for_all_addon_domains, $servername);
     }
     push (@output, \@servername_for_all_addon_domains);
@@ -356,13 +362,14 @@ sub fix_new_primary_domain_dns_zone {
 
         if ($new_dns_record->{'type'} eq 'A' || $new_dns_record->{'type'} eq 'AAAA') {
             for my $subdomain (@{$subdomains}) {
-                if
-                # If the record name contains a subdomain, don't delete it.
-                if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
-                    if (($temp_subdomain ~~ @service_subdomains) == 0) {
-                        push (@records_to_keep, $new_dns_record);
+                if ( grep(!/^$subdomain$/, @servername_for_all_addon_domains ) ) {
+                    # If the record name contains a subdomain, don't delete it.
+                    if (index($new_dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
+                        if (($temp_subdomain ~~ @service_subdomains) == 0) {
+                            push (@records_to_keep, $new_dns_record);
+                        }
+                        last;
                     }
-                    last;
                 }
             }
         }

@@ -23,5 +23,3 @@ echo "Installation is complete!"
 #rm -rf /root/tmp/plugin
 #rm -rf /root/tmp/plugin.tar.gz
 #rm /usr/local/cpanel/base/frontend/paper_lantern/update_primary_domain/
-
-#Slash_And_Or_Dashes99
