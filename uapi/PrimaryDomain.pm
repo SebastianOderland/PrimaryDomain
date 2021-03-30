@@ -68,10 +68,10 @@ sub change_primary_domain {
 
 
     # DELETE ALL SUBDOMAINS ON THE ADDON DOMAIN
-    my $res = delete_subdomains($old_domain, $new_domain, \@old_subdomains);
-    my @subdomains_for_old_domain = $res->{'old_domain'};
-    my @subdomains_for_new_domain = $res->{'data'};
-    push (@output, {"Output: delete_subdomains" => $res});
+    my $subdomain_output = delete_subdomains($old_domain, $new_domain, \@old_subdomains);
+    my @subdomains_for_old_domain = $subdomain_output->{'subdomains_for_old_domain'};
+    my @subdomains_for_new_domain = $subdomain_output->{'subdomains_for_new_domain'};
+    push (@output, {"Output: delete_subdomains" => $subdomain_output});
 
 
     # DELETE CURRENT ADDON DOMAIN
@@ -100,12 +100,12 @@ sub change_primary_domain {
     my @fix_old_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
     push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_output});
 
-    my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
+    my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
     push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
 
     # RECREATE SUBDOMAINS
-    push (@output, {"Output: create_subdomains_for_old_domain" => create_subdomains($old_domain, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain)});
-    push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_this_addon_domain, \@old_dns_zone_for_new_domain)});
+    push (@output, {"Output: create_subdomains_for_old_domain" => create_subdomains($old_domain, \@subdomains_for_old_domain, \@old_dns_zone_for_old_domain)});
+    push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain)});
 
     $result->data(\@output);
     return 1;
@@ -126,24 +126,42 @@ sub delete_subdomains {
 
     my %output;
 
-    my @data;
-    my @old_domain_subdomains;
-    my @new_domain_subdomains;
-    for my $subdomain (@{$subdomains}) { 
-        if (index ($subdomain->{'domain'}, $new_domain) != -1) {
-            my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
-            my $command_output = `$command`;
-            #push (@output, {'result' => $command_output});
-            $output{'result'} = $command_output;
-            if($subdomain->{'rootdomain'} eq $domain) {
+    my @subdomains_for_old_domain;
+    my @subdomains_for_new_domain;
+    my @servername_for_all_addon_domains;
 
-            }
-            push (@old_domain_subdomains, $subdomain->{'subdomain'});
-            push (@old_domain_subdomains, $subdomain->{'subdomain'});
-            push (@data, $subdomain->{'subdomain'});
-        }
+    my $addon_domains = Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'};
+    for my $addon_domain (@{$addon_domains}) {
+        my $servername = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
+            {
+                'domain'    => $addon_domain,
+            })->{'data'}->{'servername'};
+
+        $servername =~ s/[.]\Q$old_domain//;
+
+        push(@servername_for_all_addon_domains, $servername);
     }
-    $output{'data'} = \@data;
+
+    for my $subdomain (@{$subdomains}) {
+        $output{'servernames'} = \@servername_for_all_addon_domains;
+        
+        if ( grep(!/^$subdomain->{'subdomain'}$/, @servername_for_all_addon_domains)) {
+            $output{$subdomain} = $subdomain->{'subdomain'};
+            if (index ($subdomain->{'domain'}, $new_domain) != -1) {
+                my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
+                my $command_output = `$command`;
+                #push (@output, {'result' => $command_output});
+                $output{'result'} = $command_output;
+                push (@subdomains_for_new_domain, $subdomain->{'subdomain'});
+            }
+            else {
+                push (@subdomains_for_old_domain, $subdomain->{'subdomain'});
+            }
+        }
+        
+    }
+    $output{'subdomains_for_old_domain'} = \@subdomains_for_old_domain;
+    $output{'subdomains_for_new_domain'} = \@subdomains_for_new_domain;
 
     return \%output;
 }

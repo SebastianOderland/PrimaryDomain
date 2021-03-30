@@ -8,7 +8,7 @@ Subdomains are not working.
 Done for now!
 
 - Subdomains\
-New Primary Domain Completed!
+New Primary Domain Completed!\
 Old Primary Domain Incomplete.
 
 - E-Mail\
