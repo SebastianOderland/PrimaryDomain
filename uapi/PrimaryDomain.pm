@@ -145,8 +145,10 @@ sub delete_subdomains {
     for my $subdomain (@{$subdomains}) {
         $output{'servernames'} = \@servername_for_all_addon_domains;
         
+        # 
         if ( grep(!/^$subdomain->{'subdomain'}$/, @servername_for_all_addon_domains)) {
             $output{$subdomain} = $subdomain->{'subdomain'};
+            $output{$subdomain} = $subdomain->{'domain'};
             if (index ($subdomain->{'domain'}, $new_domain) != -1) {
                 my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
                 my $command_output = `$command`;
