@@ -1,14 +1,13 @@
 ## Notes
 
 - Documentroot\
-Done for primary domain and addon domain.
-Subdomains are not working.
-
-- DNS\
-Done for now!
+Done!
 
 - Subdomains\
 Done!
+
+- DNS\
+Done for now!
 
 - E-Mail\
 ~~E-mailaccounts does not seem to update after changing primary domain~~\
