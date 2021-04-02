@@ -8,8 +8,7 @@ Subdomains are not working.
 Done for now!
 
 - Subdomains\
-New Primary Domain Completed!\
-Old Primary Domain Incomplete.
+Done!
 
 - E-Mail\
 ~~E-mailaccounts does not seem to update after changing primary domain~~\

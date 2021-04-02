@@ -73,23 +73,34 @@ sub change_primary_domain {
     my @subdomains_for_new_domain = $subdomain_output->{'subdomains_for_new_domain'};
     push (@output, {"Output: delete_subdomains" => $subdomain_output});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # DELETE CURRENT ADDON DOMAIN
     push (@output, {"Output: delete_addon_domain" => delete_addon_domain($new_domain)});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # CHANGE PRIMARY DOMAIN
     push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $new_domain })});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # CREATE NEW ADDON DOMAIN
     push (@output, {"Output: create_addon_domain" => create_addon_domain($old_domain)});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
+
+    my @temp_new_subdomains = get_subdomains();
+    push (@output, {"Output: get_new_subdomains" => \@temp_new_subdomains});
+
+    # DELETE THE AUTOMATICALLY CREATED SUBDOMAIN
+    push (@output, {"Output: delete_subdomains 2" => delete_subdomains($old_domain, $new_domain, \@temp_new_subdomains)});
 
     # STORE NEW DNS ZONES
     my @new_dns_zone_for_old_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $old_domain});
     my @new_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # STORE NEW SUBDOMAINS
     my @new_subdomains = get_subdomains();
@@ -107,8 +118,15 @@ sub change_primary_domain {
     push (@output, {"Output: create_subdomains_for_old_domain" => create_subdomains($old_domain, \@subdomains_for_old_domain, \@old_dns_zone_for_old_domain)});
     push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain)});
 
+    push (@output, {"Output: email_accounts" => get_email_accounts()});
+    
     $result->data(\@output);
     return 1;
+}
+
+sub get_email_accounts {
+    my $email_accounts = Cpanel::API::_execute('Email', 'list_pops');
+    return $email_accounts;
 }
 
 sub get_subdomains {
@@ -142,17 +160,20 @@ sub delete_subdomains {
         push(@servername_for_all_addon_domains, $servername);
     }
 
+    my $index = 0;
     for my $subdomain (@{$subdomains}) {
         $output{'servernames'} = \@servername_for_all_addon_domains;
         
-        # 
-        if ( grep(!/^$subdomain->{'subdomain'}$/, @servername_for_all_addon_domains)) {
-            $output{$subdomain} = $subdomain->{'subdomain'};
-            $output{$subdomain} = $subdomain->{'domain'};
+        # NOT WORKING
+        my $code = any { $subdomain->{'subdomain'} eq $_ } @servername_for_all_addon_domains;
+        if ($code == 0) {
+        #if ( grep(!/\Q$subdomain->{subdomain}\E/, @servername_for_all_addon_domains)) {
+            #$output{$index} = $subdomain->{'subdomain'};
+            $output{$index} = $code;
+            $index = $index + 1;
             if (index ($subdomain->{'domain'}, $new_domain) != -1) {
                 my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
                 my $command_output = `$command`;
-                #push (@output, {'result' => $command_output});
                 $output{'result'} = $command_output;
                 push (@subdomains_for_new_domain, $subdomain->{'subdomain'});
             }
