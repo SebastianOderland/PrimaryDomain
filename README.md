@@ -11,7 +11,7 @@ Done for now!
 
 - E-Mail\
 ~~E-mailaccounts does not seem to update after changing primary domain~~\
-Nevermind, it updates sometimes.
+Nevermind it updates sometimes, but can't seem to replicate it.
 
 &nbsp;
 &nbsp;
