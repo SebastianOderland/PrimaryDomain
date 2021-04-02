@@ -119,7 +119,7 @@ sub change_primary_domain {
     push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain)});
 
     push (@output, {"Output: email_accounts" => get_email_accounts()});
-    
+
     $result->data(\@output);
     return 1;
 }
@@ -175,10 +175,10 @@ sub delete_subdomains {
                 my $command = "cpapi2 SubDomain delsubdomain domain=$subdomain->{'domain'}";
                 my $command_output = `$command`;
                 $output{'result'} = $command_output;
-                push (@subdomains_for_new_domain, $subdomain->{'subdomain'});
+                push (@subdomains_for_new_domain, $subdomain);
             }
             else {
-                push (@subdomains_for_old_domain, $subdomain->{'subdomain'});
+                push (@subdomains_for_old_domain, $subdomain);
             }
         }
         
@@ -199,7 +199,7 @@ sub create_subdomains {
     my @data;
     push(@data, $domain);
     for my $subdomain (@{$subdomains[0]}) { 
-        my $command = "cpapi2 SubDomain addsubdomain domain=$subdomain rootdomain=$domain";
+        my $command = "cpapi2 SubDomain addsubdomain domain=$subdomain->{'subdomain'} rootdomain=$domain dir=$subdomain->{'documentroot'}";
         my $command_output = `$command`;
 
         #$output{'result'} = $command_output;
@@ -212,7 +212,7 @@ sub create_subdomains {
         for my $dns_record (@{$new_dns_zone_for_new_domain[0]}) {
             push(@data, $dns_record->{'name'});
             push(@data, $subdomain);
-            if (index($dns_record->{'name'}, $subdomain) != -1) {
+            if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
                 push(@records_to_remove, $dns_record->{'Line'});
             }
         }
@@ -233,7 +233,7 @@ sub create_subdomains {
         }
 
         for my $dns_record (@{$old_dns_zone[0]}) {
-            if (index($dns_record->{'name'}, $subdomain) != -1) {
+            if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) != -1) {
                 my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
                     {
                     "user" => $Cpanel::user,
@@ -446,7 +446,7 @@ sub fix_new_primary_domain_dns_zone {
         }
         else {
             for my $subdomain (@{$subdomains_for_this_addon_domain[0]}) {
-                if (index($dns_record->{'name'}, $subdomain) == -1) {
+                if (index($dns_record->{'name'}, $subdomain->{'subdomain'}) == -1) {
                     my $result = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminAddDNSRecord',
                         {
                         "user" => $Cpanel::user,
