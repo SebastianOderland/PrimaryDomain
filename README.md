@@ -18,11 +18,11 @@ Nevermind it updates sometimes, but can't seem to replicate it.
 
 ## Todo
 
-- Convert as much as possible to UAPI
-- The process takes quite a while, so a loading screen is kinda necessary
-- Probably redo the process of importing DNS-Records
-- Either check all the "potential" outcome before executing anything, or store a backup of the data
-- Update primary domain in WHMCS
+- Convert as much as possible to UAPI.
+- The process takes quite a while, so a loading bar/screen is kinda necessary.
+- Probably redo the process of importing DNS-Records(Don't use the cPanel/WHM API).
+- Store a backup of the data, in case it fails.
+- Update primary domain in WHMCS.
 
 &nbsp;
 &nbsp;
