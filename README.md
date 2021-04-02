@@ -18,10 +18,6 @@ Nevermind it updates sometimes, but can't seem to replicate it.
 
 ## Todo
 
-- DONE! Remove all subdomains for current Addon Domain
-- DONE! Remove all DNS-records for subdomains
-- DONE! Recreate the subdomains
-
 - Convert as much as possible to UAPI
 - The process takes quite a while, so a loading screen is kinda necessary
 - Probably redo the process of importing DNS-Records
