@@ -7,7 +7,6 @@ mkdir plugin_files
 cp -R plugin/. plugin_files/
 tar -czvf plugin_files/primary_domain.tar.gz primary_domain
 tar -czvf plugin.tar.gz plugin_files
-rm -rf plugin_files
 
 # GIT
 git add .

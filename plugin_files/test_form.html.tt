@@ -1,0 +1,64 @@
+[%
+    SET CPANEL.CPVAR.dprefix="../";
+    USE Dumper;
+
+    SET result = execute("PrimaryDomain", "test_function",
+    {
+        "new_domain" => FORM.new_primary_domain
+    });
+
+    SET change_primary_domain_error = CPANEL.CPERROR.changeprimarydomain;
+    SET errors = [];
+    SET successes = [];
+    
+    IF result.errors or change_primary_domain_error;
+        FOREACH error_msg IN result.errors;
+            errors.push(error_msg);
+        END;
+        errors.push(change_primary_domain_error.html());
+    ELSE;
+        successes.push(locale.maketext("Successfully changed the primary domain to “[_1]”.", FORM.new_primary_domain));
+    END;
+%]
+
+[% WRAPPER '_assets/master.html.tt'
+    app_key = "primary_domain"
+-%]
+
+<div class="body-content">
+    [% IF errors.size() > 0 %]
+        <div id="addError" class="alert alert-danger" role="alert">
+            <span id="addErrorImg" class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            [% FOREACH msg = errors %]
+                <div class="alert-message">
+                    [% msg %]
+                </div>
+            [% END %]
+        </div>
+    [% END %]
+
+    [% IF successes.size() > 0 %]
+        <div id="addSuccess" class="alert alert-success" role="alert">
+            <span id="addSuccessImg" class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+            [% FOREACH msg = successes %]
+                <div class="alert-message">
+                    [% msg %]
+                </div>
+            [% END %]
+            <br>
+            <br>
+            <!--To order the hash I put it inside an array-->
+            [% FOREACH output_item IN result.data %]
+                [% FOREACH key IN output_item.keys %]
+                    <h6><b>[% key %]</b></h6>
+                    <p>[% Dumper.dump(output_item.$key) %]</p>
+                    <br>
+                [% END %]
+            [% END %]
+        </div>
+    [% END %]
+
+    [% INCLUDE _assets/return_link.html.tt return_location="index.html"  return_link_text=locale.maketext("Go Back" ) %]
+
+</div>
+[% END #wrapper %]
