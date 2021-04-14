@@ -109,9 +109,10 @@
             </div>
             <br>
             <br>
-            <!--<div class="section" id="test-section">
-                <h2>[% locale.maketext("TEST FORM") %]</h2>
-                <form id="test_form" method="post" action="test_form.html" name="test_form">
+            <div class="section" id="test-section">
+                <h2>[% locale.maketext("Test Function") %]</h2>
+                <form id="testform" method="post" action="test_form.html" name="testform">
+                    <!-- prevent password autofill -->
                     <input type="text" style="display:none">
                     <input type="password" autocomplete='off' style="display:none">
                     <div class="form-group">
@@ -135,10 +136,10 @@
                     <div class="form-group">
                         <input id="submit_domain" name="go" type="submit" class="btn btn-primary" name="button-create" value="[% locale.maketext("Update") %]" />
                     </div>
-                </form>       
+                </form> 
             </div>
             <br>
-            <br>-->
+            <br>
             <div class="section" id="reset-section">
                 <h2>[% locale.maketext("RESET DOMAINS AND DNS") %]</h2>
                 <form id="reset_form" method="post" action="reset.html" name="reset_form">

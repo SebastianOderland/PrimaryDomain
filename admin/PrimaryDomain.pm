@@ -3,20 +3,27 @@ package Cpanel::Admin::Modules::PrimaryDomain::PrimaryDomain;
 use strict;
 use warnings;
 use Data::Dumper;
-$Data::Dumper::Terse = 1;
-$Data::Dumper::Useqq = 1;
-use JSON;
+use Sys::Hostname;
+use experimental "switch";
+use feature qw/switch/;
 
 use parent 'Cpanel::Admin::Base';
 use cPanel::PublicAPI;
-use experimental "switch";
 
-use feature qw/switch/;
+# ---
+# WHMCS
+use HTTP::Request;
+use LWP::UserAgent;
+# ---
 
-my $cp = cPanel::PublicAPI->new("host" => "cpanel-dev-cl7.oderland.com");
 
+# Initialize PublicAPI
+my $public_api = cPanel::PublicAPI->new("host" => hostname);
+
+# Functions accessible through UAPI
 use constant _actions =>
 (
+    'AdminTestFunction',
     'AdminChangePrimaryDomain',
     'AdminGetDNSZone',
     'AdminGetSubDomains',
@@ -24,74 +31,69 @@ use constant _actions =>
     'AdminEditDNSRecord',
     'AdminRemoveDNSRecord',
     'AdminResetDNSZone',
+    'AdminUpdateWHMCSDomainName',
 );
 
+sub AdminTestFunction {
+    my ($self, $args) = @_;
+
+    my @output;
+
+    push (@output, {'1' => Dumper($self->{'caller'})});
+    push (@output, {'2' => " ----------------------- "});
+    push (@output, {'3' => Dumper($self->{'caller'}->{'_cpuser_data'})});
+    push (@output, {'4' => " ----------------------- "});
+    push (@output, {'5' => Dumper($self->{'caller'}->{'_cpuser_data'}->{'USER'})});
+
+    return \@output;
+}
+
 sub AdminChangePrimaryDomain {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
+    my $output = $public_api->whm_api('modifyacct',
+    { 
+        'user' => $self->{'caller'}->{'_cpuser_data'}->{'USER'},
+        'DNS' => $args->{'new_domain'}
+    });
 
-    my $user = $self->{_args}{user};
-    my $new_domain = $self->{_args}{new_domain};
-
-    my $command = "whmapi1 modifyacct user=" . $user . " DNS=" . $new_domain;
-
-    my $output = `$command`;
     return $output;
 }
 
 sub AdminGetSubDomains {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
-
-    my $user = $self->{_args}{user};
-
-    my $subdomains = $cp->cpanel_api2_request('whostmgr',
+    my $subdomains = $public_api->cpanel_api2_request('whostmgr',
     {
         'module' => 'SubDomain',
         'func' => 'listsubdomains',
-        'user' => $user,
+        'user' => $self->{'caller'}->{'_cpuser_data'}->{'USER'}
     });
 
     return $subdomains;
 }
 
 sub AdminGetDNSZone {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
+    my $domain = $args->{'domain'};
 
-    my $user = $self->{_args}{user};
-    my $domain = $self->{_args}{domain};
-
-    my @dns_zone = $cp->whm_api('dumpzone', { 'domain' => $domain });
-    my @new_dns_zone = $dns_zone[0]->{data}->{zone}[0]->{record};
+    my @dns_zone = $public_api->whm_api('dumpzone', { 'domain' => $domain });
+    my @new_dns_zone = $dns_zone[0]->{'data'}->{'zone'}[0]->{'record'};
 
     return @new_dns_zone;
 }
 
 sub AdminRemoveDNSRecord {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
+    my $domain = $args->{'domain'};
+    my $line = $args->{'line'};
 
-    my $user = $self->{_args}{user};
-    my $domain = $self->{_args}{domain};
-    my $line = $self->{_args}{line};
-
-    my $output = $cp->whm_api('getzonerecord', { 'domain' => $domain, "line" => $line });
-    my $record_type = $output->{data}->{record}[0]->{type};
+    my $output = $public_api->whm_api('getzonerecord', { 'domain' => $domain, "line" => $line });
+    my $record_type = $output->{'data'}->{'record'}[0]->{'type'};
     if ($record_type eq "A" || $record_type eq "CNAME" || $record_type eq "MX" || $record_type eq "TXT") {
-        my $output2 = $cp->whm_api('removezonerecord', { 'zone' => $domain, "line" => $line });
+        my $output2 = $public_api->whm_api('removezonerecord', { 'zone' => $domain, "line" => $line });
         return $output2;
     }
 
@@ -99,61 +101,56 @@ sub AdminRemoveDNSRecord {
 }
 
 sub AdminAddDNSRecord {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
-
-    my $user = $self->{_args}{user};
-    my $domain = $self->{_args}{domain};
-    my $dns_record = $self->{_args}{dns_record};
+    my $domain = $args->{'domain'};
+    my $dns_record = $args->{'dns_record'};
     my $edit_dns_record_output;
 
-    given($dns_record->{type}) {
+    given($dns_record->{'type'}) {
         when ("A") {
-            $edit_dns_record_output = $cp->whm_api('addzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('addzonerecord',
             {
                 "domain" => $domain,
-                "name" => $dns_record->{name},
+                "name" => $dns_record->{'name'},
                 "class" => "IN",
-                "ttl" => $dns_record->{ttl},
-                "type" => $dns_record->{type},
-                "address" => $dns_record->{address},
+                "ttl" => $dns_record->{'ttl'},
+                "type" => $dns_record->{'type'},
+                "address" => $dns_record->{'address'},
             });
         }
         when ("CNAME") {
-            $edit_dns_record_output = $cp->whm_api('addzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('addzonerecord',
             {
                 'domain' => $domain,
-                "name" => $dns_record->{name},
+                "name" => $dns_record->{'name'},
                 "class" => "IN",
-                "ttl" => $dns_record->{ttl},
-                "type" => $dns_record->{type},
-                "cname" => $dns_record->{cname},
+                "ttl" => $dns_record->{'ttl'},
+                "type" => $dns_record->{'type'},
+                "cname" => $dns_record->{'cname'},
             });
         }
         when ("MX") {
-            $edit_dns_record_output = $cp->whm_api('addzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('addzonerecord',
             {
                 'domain' => $domain,
-                "name" => $dns_record->{name},
+                "name" => $dns_record->{'name'},
                 "class" => "IN",
-                "ttl" => $dns_record->{ttl},
-                "type" => $dns_record->{type},
-                "preference" => $dns_record->{preference},
-                "exchange" => $dns_record->{exchange},
+                "ttl" => $dns_record->{'ttl'},
+                "type" => $dns_record->{'type'},
+                "preference" => $dns_record->{'preference'},
+                "exchange" => $dns_record->{'exchange'},
             });
         }
         when ("TXT") {
-            $edit_dns_record_output = $cp->whm_api('addzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('addzonerecord',
             {
                 'domain' => $domain,
-                "name" => $dns_record->{name},
+                "name" => $dns_record->{'name'},
                 "class" => "IN",
-                "ttl" => $dns_record->{ttl},
-                "type" => $dns_record->{type},
-                "txtdata" => $dns_record->{txtdata},
+                "ttl" => $dns_record->{'ttl'},
+                "type" => $dns_record->{'type'},
+                "txtdata" => $dns_record->{'txtdata'},
             });
         }
     }
@@ -162,21 +159,16 @@ sub AdminAddDNSRecord {
 }
 
 sub AdminEditDNSRecord {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
-
-    my $user = $self->{_args}{user};
-    my $domain = $self->{_args}{domain};
-    my $line = $self->{_args}{line};
-    my $dns_record = $self->{_args}{dns_record};
+    my $domain = $args->{domain};
+    my $line = $args->{line};
+    my $dns_record = $args->{dns_record};
     my $edit_dns_record_output;
 
     given($dns_record->{type}) {
         when ("A") {
-            $edit_dns_record_output = $cp->whm_api('editzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('editzonerecord',
             {
                 'domain' => $domain,
                 "line" => $line,
@@ -187,7 +179,7 @@ sub AdminEditDNSRecord {
             });
         }
         when ("CNAME") {
-            $edit_dns_record_output = $cp->whm_api('editzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('editzonerecord',
             {
                 'domain' => $domain,
                 "line" => $line,
@@ -198,7 +190,7 @@ sub AdminEditDNSRecord {
             });
         }
         when ("MX") {
-            $edit_dns_record_output = $cp->whm_api('editzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('editzonerecord',
             {
                 'domain' => $domain,
                 "line" => $line,
@@ -210,7 +202,7 @@ sub AdminEditDNSRecord {
             });
         }
         when ("TXT") {
-            $edit_dns_record_output = $cp->whm_api('editzonerecord',
+            $edit_dns_record_output = $public_api->whm_api('editzonerecord',
             {
                 'domain' => $domain,
                 "line" => $line,
@@ -226,17 +218,57 @@ sub AdminEditDNSRecord {
 }
 
 sub AdminResetDNSZone {
-    my $class = shift;
+    my ($self, $args) = @_;
 
-    my $self = {
-        _args => shift,
-    };
+    my $domain = $args->{'domain'};
 
-    my $user = $self->{_args}{user};
-    my $domain = $self->{_args}{domain};
-
-    my $output = $cp->whm_api('resetzone', { 'domain' => $domain });
+    my $output = $public_api->whm_api('resetzone', { 'domain' => $domain });
 
     return $output;
 }
+
+# WHMCS
+sub AdminUpdateWHMCSDomainName {
+    my ($self, $args) = @_;
+
+    my $user = $args->{'user'};
+    my $old_domain = $args->{'old_domain'};
+    my $new_domain = $args->{'new_domain'};
+
+    my $url = 'https://www.oderland.se/clients/includes/api.php';
+    #my $ua = LWP::UserAgent->new;
+
+    #$class, $method, $uri, $header, $content
+
+    #my $request = HTTP::Request->new(GET => 'http://www.example.com/');
+
+    #my $search_request = HTTP::Request->new('POST', $url, {
+    #    'Content-Type' => 'application/x-www-form-urlencoded'
+    #}
+    #{
+    #    'action' => 'GetClientsProducts',
+    #    'username' => 'IDENTIFIER_OR_ADMIN_USERNAME',
+    #    'password' => 'SECRET_OR_HASHED_PASSWORD',
+    #    'domain' => $old_domain,
+    #    'username2' => $user,
+    #    'responsetype' => 'json',
+    #});
+
+    #my $update_domain_request = HTTP::Request->new('POST', $url, {
+    #    'action' => 'UpdateClientProduct',
+    #    'username' => 'IDENTIFIER_OR_ADMIN_USERNAME',
+    #    'password' => 'SECRET_OR_HASHED_PASSWORD',
+    #    'serviceid' => '1',
+    #    'domain' => $new_domain,
+    #    'responsetype' => 'json',
+    #});
+
+    #my $response = $ua->request($search_request);
+    #my $response_object = decode_json $response;
+    #return $response;
+    #if ($resp)
+
+    #my $response = $ua->request($update_domain_request);
+}
+
 1;

@@ -1,26 +1,24 @@
 ## Notes
 
 - Documentroot\
-Done!
+Done.
 
 - Subdomains\
-Done!
+Done.
 
 - DNS\
-Done for now!
+Done for now.
 
 - E-Mail\
-~~E-mailaccounts does not seem to update after changing primary domain~~\
-Nevermind it updates sometimes, but can't seem to replicate it.
+Done?
 
 &nbsp;
 &nbsp;
 
 ## Todo
 
-- Convert as much as possible to UAPI.
-- The process takes quite a while, so a loading bar/screen is kinda necessary.
-- Probably redo the process of importing DNS-Records(Don't use the cPanel/WHM API).
+- Probably redo the process of adding/deleting/editing DNS-Records(Don't use the cPanel/WHM API).
+- The process takes quite a while, so a loading bar/screen is kinda necessary(If we are still using cPanel/WHM API that is).
 - Store a backup of the data, in case it fails.
 - Update primary domain in WHMCS.
 

@@ -3,24 +3,39 @@ package Cpanel::API::PrimaryDomain;
 use strict;
 use warnings;
 use Data::Dumper;
+use JSON;
+use Sys::Hostname;
+use feature qw/switch/;
+use List::Util qw(any);
 
 use Cpanel::AdminBin::Call;
 use Cpanel::Api2::Exec;
 use Whostmgr::API::1::DNS();
-use feature qw/switch/;
-use List::Util qw(any);
+
+# ---
+# WHMCS
+use HTTP::Request;
+use LWP::UserAgent;
+# ---
 
 sub plugin_info {
     my ( $args, $result ) = @_;
     my @output;
     local $Data::Dumper::Terse = 1;
 
-    my $primary_domain = %Cpanel::CPDATA{'DNS'};
-    push (@output, {'primary_domain' => $primary_domain});
-    my $addon_domains = Dumper(Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'});
-    push (@output, {'addon_domains' => $addon_domains});
-    #my $param = join(q{, }, map{qq{$_ => $hash{$_}}} keys %hash);
+    #my $primary_domain = %Cpanel::CPDATA{'DNS'};
+    #push (@output, {'primary_domain' => $primary_domain});
+    #my $addon_domains = Dumper(Cpanel::API::_execute( 'DomainInfo', 'list_domains')->{'data'}->{'addon_domains'});
+    #push (@output, {'addon_domains' => $addon_domains});
  
+    my $domains = Cpanel::API::_execute('DomainInfo', 'list_domains')->{'data'};
+
+    push (@output, {'primary_domain' => Dumper($domains->{'main_domain'})});
+    push (@output, {'addon_domains' => Dumper($domains->{'addon_domains'})});
+    push (@output, {'sub_domains' => Dumper($domains->{'sub_domains'})});
+    push (@output, {'alias_domains' => Dumper($domains->{'parked_domains'})});
+    push (@output, {'test_function' => Dumper(Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminTestFunction'))});
+
     $result->data(\@output);
     return 1;
 }
@@ -28,7 +43,6 @@ sub plugin_info {
 sub change_primary_domain {
     my ( $args, $result ) = @_;
 
-    # ARRAY FOR LOGGING OUTPUT
     my @output;
 
     my $old_domain = %Cpanel::CPDATA{DNS};
@@ -37,26 +51,38 @@ sub change_primary_domain {
     push (@output, {'Output: old_domain' => $old_domain});
     push (@output, {'Output: new_domain' => $new_domain});
 
-    if ($old_domain eq $new_domain) {
-        $Cpanel::CPERROR{'changeprimarydomain'} = 'Old and new primary domain are the same!';
-        return;
-    }
-
     my $old_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
     {
         'domain'    => $old_domain,
-    })->{'data'};
+    });
 
     my $new_domain_info = Cpanel::API::_execute( 'DomainInfo', 'single_domain_data',
     {
         'domain'    => $new_domain,
-    })->{'data'};
+    });
 
-    if ($old_domain_info->{'documentroot'} ne $new_domain_info->{'documentroot'}) {
+    # "New" Domain exists?
+    if($new_domain_info->{'status'} ne 1) {
+        $Cpanel::CPERROR{'changeprimarydomain'} = 'The domain [' . $new_domain . '] does not exist on this account!';
+        return;
+    }
+    # "New" Domain is an addon domain?
+    if($new_domain_info->{'data'}->{'type'} ne 'addon_domain') {
+        $Cpanel::CPERROR{'changeprimarydomain'} = 'The domain [' . $new_domain . '] is not an addon domain!';
+        return;
+    }
+    # New Domain and Current Domain is the same?
+    if ($old_domain eq $new_domain) {
+        $Cpanel::CPERROR{'changeprimarydomain'} = 'Old and new primary domain are the same!';
+        return;
+    }
+    # Are the documentroots the same?
+    if ($old_domain_info->{'data'}->{'documentroot'} ne $new_domain_info->{'data'}->{'documentroot'}) {
         $Cpanel::CPERROR{'changeprimarydomain'} = 'The current Addon Domain and the current Primary Domain needs to have the same Documentroot!';
         return;
     }
 
+    push (@output, {"Output: CPANEL::CPDATA" => \%Cpanel::CPDATA});
 
     # STORE OLD SUBDOMAINS
     my @old_subdomains = get_subdomains();
@@ -66,41 +92,30 @@ sub change_primary_domain {
     my @old_dns_zone_for_old_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $old_domain});
     my @old_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
 
-
     # DELETE ALL SUBDOMAINS ON THE ADDON DOMAIN
     my $subdomain_output = delete_subdomains($old_domain, $new_domain, \@old_subdomains);
     my @subdomains_for_old_domain = $subdomain_output->{'subdomains_for_old_domain'};
     my @subdomains_for_new_domain = $subdomain_output->{'subdomains_for_new_domain'};
     push (@output, {"Output: delete_subdomains" => $subdomain_output});
 
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
-
     # DELETE CURRENT ADDON DOMAIN
     push (@output, {"Output: delete_addon_domain" => delete_addon_domain($new_domain)});
-
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # CHANGE PRIMARY DOMAIN
     push (@output, {"Output: change_primary_domain" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminChangePrimaryDomain',{ "user" => $Cpanel::user,"new_domain" => $new_domain })});
 
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
-
     # CREATE NEW ADDON DOMAIN
     push (@output, {"Output: create_addon_domain" => create_addon_domain($old_domain)});
-
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     my @temp_new_subdomains = get_subdomains();
     push (@output, {"Output: get_new_subdomains" => \@temp_new_subdomains});
 
     # DELETE THE AUTOMATICALLY CREATED SUBDOMAIN
-    push (@output, {"Output: delete_subdomains 2" => delete_subdomains($old_domain, $new_domain, \@temp_new_subdomains)});
+    push (@output, {"Output: delete_subdomains" => delete_subdomains($old_domain, $new_domain, \@temp_new_subdomains)});
 
     # STORE NEW DNS ZONES
     my @new_dns_zone_for_old_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $old_domain});
     my @new_dns_zone_for_new_domain = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetDNSZone', { "user" => $Cpanel::user, "domain" => $new_domain});
-
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
 
     # STORE NEW SUBDOMAINS
     my @new_subdomains = get_subdomains();
@@ -108,26 +123,24 @@ sub change_primary_domain {
 
 
     # IMPORT OLD DNS RECORDS TO NEW DNS ZONE
-    my @fix_old_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
-    push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_output});
+    my @fix_old_primary_domain_dns_zone_output = fix_old_primary_domain_dns_zone($old_domain, \@old_subdomains, \@old_dns_zone_for_old_domain, \@new_dns_zone_for_old_domain);
+    push (@output, {"Output: fix_old_primary_domain_dns_zone" => \@fix_old_primary_domain_dns_zone_output});
 
-    my @fix_new_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
-    push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_output});
+    my @fix_new_primary_domain_dns_zone_output = fix_new_primary_domain_dns_zone($new_domain, \@new_subdomains, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain, \@new_dns_zone_for_new_domain);
+    push (@output, {"Output: fix_new_primary_domain_dns_zone" => \@fix_new_primary_domain_dns_zone_output});
 
     # RECREATE SUBDOMAINS
     push (@output, {"Output: create_subdomains_for_old_domain" => create_subdomains($old_domain, \@subdomains_for_old_domain, \@old_dns_zone_for_old_domain)});
     push (@output, {"Output: create_subdomains_for_new_domain" => create_subdomains($new_domain, \@subdomains_for_new_domain, \@old_dns_zone_for_new_domain)});
 
-    push (@output, {"Output: email_accounts" => get_email_accounts()});
-
     $result->data(\@output);
     return 1;
 }
 
-sub get_email_accounts {
-    my $email_accounts = Cpanel::API::_execute('Email', 'list_pops');
-    return $email_accounts;
-}
+
+
+
+# "Sub" functions
 
 sub get_subdomains {
     my $subdomains_output = Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminGetSubDomains', { "user" => $Cpanel::user });
@@ -164,11 +177,9 @@ sub delete_subdomains {
     for my $subdomain (@{$subdomains}) {
         $output{'servernames'} = \@servername_for_all_addon_domains;
         
-        # NOT WORKING
+        # NW
         my $code = any { $subdomain->{'subdomain'} eq $_ } @servername_for_all_addon_domains;
-        if ($code == 0) {
-        #if ( grep(!/\Q$subdomain->{subdomain}\E/, @servername_for_all_addon_domains)) {
-            #$output{$index} = $subdomain->{'subdomain'};
+        if ($code == 0) { 
             $output{$index} = $code;
             $index = $index + 1;
             if (index ($subdomain->{'domain'}, $new_domain) != -1) {
@@ -475,6 +486,196 @@ sub fix_new_primary_domain_dns_zone {
     return @output;
 }
 
+
+
+
+
+
+sub test_function {
+    my ( $args, $result ) = @_;
+
+    # ARRAY FOR LOGGING OUTPUT
+    my @output;
+
+    my $old_domain = %Cpanel::CPDATA{DNS};
+    my $new_domain = $args->get('new_domain');
+    my $user = $Cpanel::user;
+
+    my $url = 'https://www.oderland.se/clients/includes/api.php';
+    my $search_header = [
+        'Content-Type' => 'application/x-www-form-urlencoded'
+    ];
+    my $search_content = {
+        'action' => 'GetClientsProducts',
+        'username' => 'IDENTIFIER_OR_ADMIN_USERNAME',
+        'password' => 'SECRET_OR_HASHED_PASSWORD',
+        'domain' => $old_domain,
+        'username2' => $user,
+        'responsetype' => 'json',
+    };
+    $search_content = encode_json $search_content;
+
+    my $search_request = HTTP::Request->new('POST', $url, $search_header, $search_content);
+
+    #my $ua = LWP::UserAgent->new;
+    #my $search_response = $ua->request($search_request);
+    #push(@output, {"Output: search_response" => $search_response});
+
+    my $search_response = {
+        "result" => "success",
+        "clientid" => "1",
+        "serviceid" => "null",
+        "pid" => "null",
+        "domain" => "null",
+        "totalresults" => "2",
+        "startnumber" => 0,
+        "numreturned" => 2,
+        "products" => {
+        "product" => [
+            {
+                "id" => "1",
+                "clientid" => "1",
+                "orderid" => "1",
+                "pid" => "1",
+                "regdate" => "2015-01-01",
+                "name" => "Starter",
+                "translated_name" => "Starter",
+                "groupname" => "Shared Hosting",
+                "translated_groupname" => "Shared Hosting",
+                "domain" => "demodomain.com",
+                "dedicatedip" => "",
+                "serverid" => "1",
+                "servername" => "Saturn",
+                "serverip" => "1.2.3.4",
+                "serverhostname" => "saturn.example.com",
+                "suspensionreason" => "",
+                "firstpaymentamount" => "12.95",
+                "recurringamount" => "12.95",
+                "paymentmethod" => "authorize",
+                "paymentmethodname" => "Credit Card",
+                "billingcycle" => "Monthly",
+                "nextduedate" => "2016-11-25",
+                "status" => "Terminated",
+                "username" => "demodoma",
+                "password" => "xxxxxxxx",
+                "subscriptionid" => "",
+                "promoid" => "0",
+                "overideautosuspend" => "",
+                "overidesuspenduntil" => "0000-00-00",
+                "ns1" => "",
+                "ns2" => "",
+                "assignedips" => "",
+                "notes" => "",
+                "diskusage" => "0",
+                "disklimit" => "0",
+                "bwusage" => "0",
+                "bwlimit" => "0",
+                "lastupdate" => "0000-00-00 00 =>00 =>00",
+                "customfields" => {
+                    "customfield" => []
+                },
+                "configoptions" => {
+                    "configoption" => []
+                }
+            },
+            {
+                "id" => "2",
+                "clientid" => "1",
+                "orderid" => "2",
+                "pid" => "3",
+                "regdate" => "2015-05-20",
+                "name" => "Plus",
+                "translated_name" => "Plus",
+                "groupname" => "Shared Hosting",
+                "translated_groupname" => "Shared Hosting",
+                "domain" => "sebode-222.hemsida.eu",
+                "dedicatedip" => "",
+                "serverid" => "2",
+                "servername" => "Pluto",
+                "serverip" => "2.3.4.5",
+                "serverhostname" => "cpanel-dev-cl7.oderland.com",
+                "suspensionreason" => "",
+                "firstpaymentamount" => "24.95",
+                "recurringamount" => "24.95",
+                "paymentmethod" => "paypal",
+                "paymentmethodname" => "PayPal",
+                "billingcycle" => "Monthly",
+                "nextduedate" => "2017-01-20",
+                "status" => "Active",
+                "username" => "sebodete",
+                "password" => "xxxxxxxx",
+                "subscriptionid" => "",
+                "promoid" => "0",
+                "overideautosuspend" => "",
+                "overidesuspenduntil" => "0000-00-00",
+                "ns1" => "",
+                "ns2" => "",
+                "assignedips" => "",
+                "notes" => "",
+                "diskusage" => "0",
+                "disklimit" => "0",
+                "bwusage" => "0",
+                "bwlimit" => "0",
+                "lastupdate" => "0000-00-00 00 =>00 =>00",
+                "customfields" => {
+                    "customfield" => []
+                },
+                "configoptions" => {
+                    "configoption" => [
+                        {
+                            "id" => "1",
+                            "option" => "Sample Config Option",
+                            "type" => "dropdown",
+                            "value" => "Selected option value"
+                        }
+                    ]
+                }
+            }
+        ]}
+    };
+
+    if ($search_response->{'result'} ne 'success') { return; }
+
+
+
+    for my $service (@{$search_response->{'products'}->{'product'}}) {
+        if ($service->{'domain'} ne $old_domain) { next; }
+        if ($service->{'serverhostname'} ne hostname) { next; }
+        if ($service->{'username'} ne $user) { next; }
+        if ($service->{'status'} ne 'Active') { next; }
+
+        my $update_domain_header = [
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ];
+
+        my $update_domain_content = {
+            'action' => 'UpdateClientProduct',
+            'username' => 'IDENTIFIER_OR_ADMIN_USERNAME',
+            'password' => 'SECRET_OR_HASHED_PASSWORD',
+            'domain' => $new_domain,
+            'serviceid' => $service->{'id'},
+            'responsetype' => 'json',
+        };
+        $update_domain_content = encode_json $update_domain_content;
+
+        my $update_domain_request = HTTP::Request->new('POST', $url, $update_domain_header, $update_domain_content);
+        #my $update_domain_response = $ua->request($update_domain_request);
+        #push(@output, {"Output: update_domain_response" => $update_domain_response});
+
+        push(@output, {"Output: search_response" => $service});
+
+        last;
+    }
+
+    #push (@output, {"Output: AdminUpdateWHMCSDomainName" => Cpanel::AdminBin::Call::call('PrimaryDomain', 'PrimaryDomain', 'AdminUpdateWHMCSDomainName', 
+    #{ 
+    #    "user" => $Cpanel::user, "old_domain" => $old_domain, "new_domain" => $new_domain
+    #})});
+
+    $result->data(\@output);
+    return 1;
+}
+
 sub reset_domains_and_dns {
     my ( $args, $result ) = @_;
 
@@ -513,5 +714,34 @@ sub reset_domains_and_dns {
     $result->data(\@output);
     return 1;
 }
+
+sub backup_etc_folders {
+    my ( $old_domain, $new_domain ) = @_;
+    my $user = $Cpanel::user;
+
+    my $command = "cp -a /home/" . $user . "/etc/" . $old_domain . "{,-bak} && cp -a /home/" . $user . "/etc/" . $new_domain . "{,-bak}";
+    my $command_output = `$command`;
+
+    return $command_output;
+}
+
+sub restore_etc_folders {
+    my ( $old_domain, $new_domain ) = @_;
+    my $user = $Cpanel::user;
+
+    my $command = "rm -rf /home/" . $user . "/etc/" . $old_domain . "&& rm -rf /home/" . $user . "/etc/" . $new_domain;
+    my $command_output = `$command`;
+    
+    $command = "mv /home/" . $user . "/etc/" . $old_domain . "{-bak,} && mv /home/" . $user . "/etc/" . $new_domain . "{-bak,}";
+    $command_output = $command_output . `$command`;
+
+    return $command_output;
+}
+
+sub get_email_accounts {
+    my $email_accounts = Cpanel::API::_execute('Email', 'list_pops');
+    return $email_accounts;
+}
+
 
 1;
