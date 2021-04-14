@@ -12,18 +12,22 @@ Done?</p></li>
 <p>   </p>
 <h2 id="todo">Todo</h2>
 <ul>
-<li>Probably redo the process of adding/deleting/editing DNS-Records(Don’t use the cPanel/WHM API).</li>
-<li>The process takes quite a while, so a loading bar/screen is kinda necessary(If we are still using cPanel/WHM API that is).</li>
+<li>Probably redo the process of adding/deleting/editing DNS-Records( Don’t use the cPanel/WHM API ).</li>
+<li>The process takes quite a while, so a loading bar/screen is kinda necessary( If we are still using cPanel/WHM API that is ).</li>
 <li>Store a backup of the data, in case it fails.</li>
 <li>Update primary domain in WHMCS.</li>
 </ul>
 <p>   </p>
 <h2 id="order-of-execution">Order of Execution</h2>
-<ol type="1">
+<ol start="0" type="1">
+<li>Check the 2 domains</li>
 <li>Get the current Subdomains and DNS Zones</li>
+<li>Delete all subdomains on current Addon Domain</li>
 <li>Delete current Addon Domain</li>
 <li>Change Primary Domain</li>
 <li>Create new Addon Domain</li>
 <li>Get the new Subdomains and DNS Zones</li>
+<li>Delete the automatically created subdomains</li>
 <li>Import old DNS Records into new DNS Zones</li>
+<li>Recreate the old subdomains</li>
 </ol>
