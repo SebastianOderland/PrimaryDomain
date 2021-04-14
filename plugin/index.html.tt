@@ -150,6 +150,10 @@
             </div>
             <br>
             <br>
+            <div class="section" id="info-section">
+            </div>
+            <br>
+            <br>
             <div class="section" id="plugin-info-section">
                 <h2>[% locale.maketext("INFO") %]</h2>
                 [% FOREACH output_item IN plugin_info.data %]
@@ -160,10 +164,6 @@
                 [% IF plugin_info.errors %]
                     [% Dumper.dump(plugin_info.errors) %]
                 [% END %]
-            </div>
-            <br>
-            <br>
-            <div class="section" id="info-section">
             </div>
             
     [% END %]
